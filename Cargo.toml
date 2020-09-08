@@ -1,0 +1,9 @@
+[package]
+name = "mcmc"
+version = "0.1.1"
+authors = ["Isaac Slavitt <isaac.slavitt@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.32"
+approx = "0.3.2"
