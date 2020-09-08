@@ -22,6 +22,7 @@ Roadmap
 - [X] Potential scale reduction factor
 - [X] Split potential scale reduction factor
 - [ ] Effective sample size
+- [ ] Monte Carlo Standard Error
 - [ ] Autocovariance
 
 **Utilities**
