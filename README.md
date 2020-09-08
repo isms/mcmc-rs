@@ -29,6 +29,11 @@ Roadmap
 - [X] Split chains as recommended in Vehtari, et al 2019
 - [ ] Thinning
 
+**Data structures**
+
+- [ ] Would it be helpful to have some kind of struct that can represent
+      one or more sample chains with a parameter name?
+
 **Performance**
 
 - [ ] Remove unnecessary copying or allocation
