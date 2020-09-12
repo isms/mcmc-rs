@@ -73,9 +73,8 @@ pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, anyhow::E
     let n = n as f64;
     let var_between = n * sample_variance(&split_chain_mean)?;
     let var_within = mean(&split_chain_var)?;
+    let result = ((var_between / var_within + n - 1.0) / n).sqrt();
 
-    let zz = (var_between / var_within + n - 1.0) / n;
-    let result = (zz as f32).sqrt() as f64;
     Ok(result)
 }
 
