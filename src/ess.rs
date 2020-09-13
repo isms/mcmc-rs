@@ -1,4 +1,4 @@
-use crate::utils::{mean, sample_variance, split_chains};
+use crate::utils::{flatten, mean, sample_variance, split_chains};
 use crate::{Array1, Array2};
 use anyhow::{anyhow, Error, Result};
 use arima::acf;
@@ -146,6 +146,18 @@ pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error
     }
     let split = split_chains(trimmed)?;
     compute_effective_sample_size(&split)
+}
+
+/// Computes the Monte Carlo Standard Error (MCSE) for the specified parameter
+/// across all samples, which is the standard deviation of the samples over the
+/// square root of effective sample size.
+///
+/// See the Stan reference manual section
+/// ["Estimation of MCMC Standard Error"](https://mc-stan.org/docs/2_24/reference-manual/effective-sample-size-section.html#estimation-of-mcmc-standard-error)
+pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
+    let ess = compute_effective_sample_size(&chains)?;
+    let var = sample_variance(&flatten(chains))?;
+    Ok((var / ess).sqrt())
 }
 
 #[cfg(test)]
@@ -430,5 +442,74 @@ mod tests {
         let chains = vec![vec![1.0, 1.0, 1.0, 1.0]];
         let ess = compute_effective_sample_size(&chains);
         assert!(ess.is_err());
+    }
+
+    #[test]
+    fn test_compute_estimated_mcse() {
+        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
+        let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
+
+        let expected_mcse = vec![
+            1.041454110e+00,
+            3.791888876e-02,
+            2.173376810e-02,
+            1.825876681e-02,
+            2.661215900e-03,
+            1.131246947e-03,
+            1.260798781e-02,
+            1.030700714e-02,
+            1.228143969e-02,
+            3.330029841e-03,
+            5.353227092e-03,
+            1.308588008e-02,
+            4.700032366e-03,
+            5.257861092e-03,
+            7.533851160e-03,
+            2.758236978e-03,
+            4.345012004e-03,
+            5.841727439e-03,
+            1.771073621e-02,
+            1.037211580e-02,
+            6.046724542e-03,
+            6.605926256e-03,
+            7.575775682e-03,
+            1.190997112e-02,
+            1.602859734e-02,
+            7.008613253e-03,
+            7.249334314e-03,
+            5.329946992e-03,
+            3.879811372e-03,
+            4.748270142e-03,
+            4.865599426e-03,
+            2.880021654e-03,
+            5.057902504e-03,
+            4.800369415e-03,
+            7.453771374e-03,
+            4.140658457e-03,
+            3.925703715e-03,
+            5.498448282e-03,
+            3.515675895e-03,
+            4.387941995e-03,
+            5.155243445e-03,
+            1.318791554e-02,
+            3.738973852e-03,
+            4.325514463e-03,
+            4.724583423e-03,
+            4.468024552e-03,
+            7.140312463e-03,
+            3.651782874e-03,
+            5.773674797e-03,
+            5.189233437e-03,
+            6.343078722e-03,
+            4.972475627e-03,
+        ];
+        for (i, expected) in expected_mcse.iter().enumerate() {
+            let chains = vec![samples1[i].clone(), samples2[i].clone()];
+            let actual = compute_estimated_mcse(&chains).unwrap();
+            assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
+        }
     }
 }
