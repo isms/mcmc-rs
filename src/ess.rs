@@ -104,11 +104,13 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 
     // Convert Geyer's initial positive sequence into an initial
     // monotone sequence
-    for s in (1..=(max_s - 3)).step_by(2) {
+    let mut s = 1;
+    while max_s >= 3 && s <= (max_s - 3) {
         if (rho_hat_s[s + 1] + rho_hat_s[s + 2]) > (rho_hat_s[s - 1] + rho_hat_s[s]) {
             rho_hat_s[s + 1] = (rho_hat_s[s - 1] + rho_hat_s[s]) / 2.0;
             rho_hat_s[s + 2] = rho_hat_s[s + 1];
-        }
+        };
+        s += 2;
     }
 
     let num_total_draws = num_chains as f64 * num_draws as f64;
