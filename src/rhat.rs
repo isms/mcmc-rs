@@ -1,6 +1,6 @@
 use crate::utils::{mean, sample_variance, split_chains};
 use crate::{Array1, Array2};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 
 /// Computes the potential scale reduction (Rhat) for the specified
 /// parameter across all kept samples.
