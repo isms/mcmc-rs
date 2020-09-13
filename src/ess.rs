@@ -230,4 +230,70 @@ mod tests {
             assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
         }
     }
+
+    #[test]
+    fn test_compute_effective_sample_size_two_chains() {
+        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
+        let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
+
+        let expected_ess = vec![
+            467.36757686,
+            138.62780027,
+            1171.62891355,
+            543.89301136,
+            519.89670767,
+            590.53267759,
+            764.75729757,
+            690.21936104,
+            326.21745260,
+            505.50985231,
+            356.44510650,
+            590.14928533,
+            655.71371952,
+            480.72769500,
+            178.74587968,
+            184.87140679,
+            643.85564048,
+            472.13048627,
+            563.84825583,
+            584.74450883,
+            449.13707437,
+            400.23475140,
+            339.21683773,
+            680.60538752,
+            1410.38271694,
+            836.01702508,
+            871.38979093,
+            952.26509331,
+            620.94420986,
+            869.97895746,
+            235.16790031,
+            788.52022938,
+            911.34806602,
+            234.22761856,
+            909.20881398,
+            748.70965886,
+            722.36225578,
+            196.76168649,
+            945.74138475,
+            768.79701460,
+            725.52731616,
+            1078.46726260,
+            471.56987828,
+            956.35673474,
+            498.19497759,
+            582.66324514,
+            696.85069050,
+            99.78353935,
+        ];
+
+        for (i, expected) in expected_ess.iter().enumerate() {
+            let chains = vec![samples1[i + 4].clone(), samples2[i + 4].clone()];
+            let actual = compute_effective_sample_size(&chains).unwrap();
+            assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
+        }
+    }
 }
