@@ -1,8 +1,22 @@
-use crate::utils::{mean, sample_variance};
+use crate::utils::{mean, sample_variance, split_chains};
 use crate::{Array1, Array2};
 use anyhow::{anyhow, Error, Result};
 use arima::acf;
 
+/// Computes the effective sample size (ESS) for the specified
+/// parameter across all kept samples.  The value returned is the
+/// minimum of ESS and the number_total_draws * log10(number_total_draws).
+/// When the number of total draws N is odd, the (N+1)/2th draw is ignored.
+///
+/// Chains are trimmed from the back to match the
+/// length of the shortest chain.  Note that the effective sample size
+/// can not be estimated with fewer than four draws.
+///
+/// See more details in Stan reference manual section
+/// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
+///
+/// Based on reference implementation in Stan v2.4.0 at
+/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138]()
 pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_chains = chains.len();
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
@@ -22,7 +36,7 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
             }
             // the only way all_same can stay true the whole way through is if
             // every single element of all the chains is the same
-            all_same &= curr == prev;
+            all_same &= (curr - prev).abs() < 1e-10;
             prev = curr;
         }
     }
@@ -105,6 +119,31 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let option1: f64 = num_total_draws / tau_hat;
     let option2: f64 = num_total_draws * num_total_draws.log10();
     Ok(option1.min(option2))
+}
+
+/// Computes the split effective sample size (ESS) for the specified
+/// parameter across all kept samples.  The value returned is the
+/// minimum of ESS and the number_total_draws * log10(number_total_draws).
+/// When the number of total draws N is odd, the (N+1)/2th draw is ignored.
+///
+/// Chains are trimmed from the back to match the
+/// length of the shortest chain.  Note that the effective sample size
+/// can not be estimated with fewer than four draws.
+///
+/// See more details in Stan reference manual section
+/// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
+///
+/// Based on reference implementation in Stan v2.4.0 at
+/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199]()
+pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
+    let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
+    // trim chains to the length of the shortest chain
+    let mut trimmed = Vec::new();
+    for chain in chains.iter() {
+        trimmed.push(chain[..num_draws].to_vec());
+    }
+    let split = split_chains(trimmed)?;
+    compute_effective_sample_size(&split)
 }
 
 #[cfg(test)]
@@ -293,6 +332,72 @@ mod tests {
         for (i, expected) in expected_ess.iter().enumerate() {
             let chains = vec![samples1[i + 4].clone(), samples2[i + 4].clone()];
             let actual = compute_effective_sample_size(&chains).unwrap();
+            assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
+        }
+    }
+
+    #[test]
+    fn test_compute_split_effective_sample_size_two_chains() {
+        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
+        let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
+
+        let expected_ess = vec![
+            467.84472286,
+            134.49757091,
+            1189.59121923,
+            569.19341812,
+            525.00159997,
+            572.69157167,
+            763.91010048,
+            710.97717906,
+            338.29803319,
+            493.34818866,
+            333.49289697,
+            588.28304375,
+            665.62041018,
+            504.26271137,
+            187.04932436,
+            156.91316803,
+            650.01816166,
+            501.45489247,
+            570.16074452,
+            550.36645240,
+            446.21946848,
+            408.21801438,
+            364.20430683,
+            678.69938531,
+            1419.23404653,
+            841.74191739,
+            881.92328583,
+            960.42014222,
+            610.92148539,
+            917.64184496,
+            239.59903291,
+            773.72649323,
+            921.33231871,
+            227.34002818,
+            900.81898633,
+            748.47755057,
+            727.36524051,
+            184.94880796,
+            948.42542442,
+            776.03021619,
+            735.27919044,
+            1077.17739932,
+            475.25192235,
+            955.28139954,
+            503.04549546,
+            591.91289033,
+            715.96959077,
+            95.59380790,
+        ];
+
+        for (i, expected) in expected_ess.iter().enumerate() {
+            let chains = vec![samples1[i + 4].clone(), samples2[i + 4].clone()];
+            let actual = compute_split_effective_sample_size(&chains).unwrap();
             assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
         }
     }
