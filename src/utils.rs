@@ -1,4 +1,4 @@
-use crate::Array2;
+use crate::{Array1, Array2};
 use anyhow::{anyhow, Error, Result};
 use std::{
     fs::File,
@@ -20,6 +20,14 @@ pub fn mean(arr: &[f64]) -> Result<f64, Error> {
 pub fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
     let xbar = mean(arr)?;
     Ok(arr.iter().map(|x| (x - xbar).powi(2)).sum::<f64>() / (arr.len() as f64 - 1.0))
+}
+
+pub fn flatten(chains: &Array2) -> Array1 {
+    let mut flattened = Vec::new();
+    for chain in chains {
+        flattened.extend(chain);
+    }
+    flattened
 }
 
 /// Splits each chain into two chains of equal length.  When the
@@ -138,5 +146,15 @@ mod tests {
         assert_eq!(split[1], vec![4.0, 4.5]);
         assert_eq!(split[2], vec![5.0, 6.0]);
         assert_eq!(split[3], vec![8.0, 8.5]);
+    }
+
+    #[test]
+    fn test_flatten() {
+        // Regular split with even numbers
+        let a = vec![1.0, 2.0, 3.0, 4.0];
+        let b = vec![5.0, 6.0, 7.0, 8.0];
+        let chains = vec![a, b];
+        let flattened = flatten(&chains);
+        assert_eq!(flattened, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]);
     }
 }
