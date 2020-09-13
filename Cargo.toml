@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.32"
 approx = "0.3.2"
+arima = "0.2.0"

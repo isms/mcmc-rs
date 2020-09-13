@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate approx;
 
+pub mod ess;
 pub mod rhat;
 pub mod utils;
 
