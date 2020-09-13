@@ -1,8 +1,13 @@
 use crate::Array2;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
 
 /// Compute the arithmetic mean of an array.
-pub fn mean(arr: &[f64]) -> Result<f64, anyhow::Error> {
+pub fn mean(arr: &[f64]) -> Result<f64, Error> {
     if arr.is_empty() {
         return Err(anyhow!("Can't take mean of empty array"));
     }
@@ -12,7 +17,7 @@ pub fn mean(arr: &[f64]) -> Result<f64, anyhow::Error> {
 }
 
 /// Compute the sample variance of an array using Bessel's correction.
-pub fn sample_variance(arr: &[f64]) -> Result<f64, anyhow::Error> {
+pub fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
     let xbar = mean(arr)?;
     Ok(arr.iter().map(|x| (x - xbar).powi(2)).sum::<f64>() / (arr.len() as f64 - 1.0))
 }
@@ -24,7 +29,7 @@ pub fn sample_variance(arr: &[f64]) -> Result<f64, anyhow::Error> {
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation).
 ///
 /// Current implementation assumes chains are all of equal size.
-pub fn split_chains(chains: Array2) -> Result<Array2, anyhow::Error> {
+pub fn split_chains(chains: Array2) -> Result<Array2, Error> {
     if chains.is_empty() {
         return Err(anyhow!("Can't split empty array of chains"));
     }
@@ -43,6 +48,23 @@ pub fn split_chains(chains: Array2) -> Result<Array2, anyhow::Error> {
         split_draws.push(chain[(half + offset)..].to_vec());
     }
     Ok(split_draws)
+}
+
+pub fn read_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
+    let mut result: Array2 = Vec::new();
+    let f = File::open(&path).unwrap();
+    let f = BufReader::new(f);
+    for line in f.lines().skip(skip_rows).take(n_rows) {
+        if let Ok(line) = line {
+            for (idx, value) in line.split(',').into_iter().enumerate() {
+                if idx >= result.len() {
+                    result.push(Vec::new())
+                }
+                result[idx].push(value.parse::<f64>().unwrap());
+            }
+        }
+    }
+    result
 }
 
 #[cfg(test)]
@@ -111,9 +133,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0, 4.0, 4.5];
         let b = vec![5.0, 6.0, 7.0, 8.0, 8.5];
         let chains = vec![a, b];
-        dbg!(&chains);
         let split = split_chains(chains).unwrap();
-        dbg!(&split);
         assert_eq!(split[0], vec![1.0, 2.0]);
         assert_eq!(split[1], vec![4.0, 4.5]);
         assert_eq!(split[2], vec![5.0, 6.0]);

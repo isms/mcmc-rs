@@ -1,6 +1,6 @@
 use crate::utils::{mean, sample_variance, split_chains};
 use crate::{Array1, Array2};
-use anyhow::Result;
+use anyhow::{anyhow, Error, Result};
 
 /// Computes the potential scale reduction (Rhat) for the specified
 /// parameter across all kept samples.
@@ -14,7 +14,7 @@ use anyhow::Result;
 ///
 /// Based on reference implementation in Stan v2.24.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
-pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, anyhow::Error> {
+pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, Error> {
     let m = chains.len();
     let n = chains.iter().map(|c| c.len()).min().unwrap();
     let mut split_chain_mean: Array1 = Vec::new();
@@ -49,7 +49,7 @@ pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, anyhow::E
 ///
 /// Based on reference implementation in Stan v2.24.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
-pub fn split_potential_scale_reduction_factor(chains: Array2) -> Result<f64, anyhow::Error> {
+pub fn split_potential_scale_reduction_factor(chains: Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
     // trim chains to the length of the shortest chain
     let mut trimmed = Vec::new();
@@ -63,28 +63,8 @@ pub fn split_potential_scale_reduction_factor(chains: Array2) -> Result<f64, any
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        fs::File,
-        io::{BufRead, BufReader},
-        path::PathBuf,
-    };
-
-    fn read_sample_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
-        let mut result: Array2 = Vec::new();
-        let f = File::open(&path).unwrap();
-        let f = BufReader::new(f);
-        for line in f.lines().skip(skip_rows).take(n_rows) {
-            if let Ok(line) = line {
-                for (idx, value) in line.split(',').into_iter().enumerate() {
-                    if idx >= result.len() {
-                        result.push(Vec::new())
-                    }
-                    result[idx].push(value.parse::<f64>().unwrap());
-                }
-            }
-        }
-        result
-    }
+    use crate::utils::read_csv;
+    use std::path::PathBuf;
 
     #[test]
     fn test_split_chains() {
@@ -114,9 +94,7 @@ mod tests {
         let a = vec![1.0, 2.0, 3.0, 4.0, 4.5];
         let b = vec![5.0, 6.0, 7.0, 8.0, 8.5];
         let chains = vec![a, b];
-        dbg!(&chains);
         let split = split_chains(chains).unwrap();
-        dbg!(&split);
         assert_eq!(split[0], vec![1.0, 2.0]);
         assert_eq!(split[1], vec![4.0, 4.5]);
         assert_eq!(split[2], vec![5.0, 6.0]);
@@ -128,8 +106,8 @@ mod tests {
         // Based on the unit test in Stan 2.2.4 but using slightly more precision:
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_potential_scale_reduction_test.cpp#L63-L99
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let samples1 = read_sample_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
-        let samples2 = read_sample_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
+        let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
+        let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
 
         let expected_rhats = vec![
             1.000417, 1.000359, 0.999546, 1.000466, 1.001193, 1.000887, 1.000175, 1.000190,
@@ -151,8 +129,8 @@ mod tests {
         // Based on the unit test in Stan 2.2.4 but using slightly more precision:
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_potential_scale_reduction_test.cpp#L135-L175
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let samples1 = read_sample_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
-        let samples2 = read_sample_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
+        let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
+        let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
 
         let expected_rhats = vec![
             1.00718209, 1.00472781, 0.99920319, 1.00060574, 1.00378194, 1.01031069, 1.00173146,
