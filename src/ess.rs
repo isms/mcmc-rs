@@ -403,4 +403,32 @@ mod tests {
             assert_abs_diff_eq!(actual, expected, epsilon = 1e-8);
         }
     }
+
+    #[test]
+    pub fn compute_effective_sample_size_minimum_n() {
+        let chains = vec![vec![1.0, 2.0, 3.0]];
+        let ess = compute_effective_sample_size(&chains);
+        assert!(ess.is_err());
+    }
+
+    #[test]
+    pub fn compute_effective_sample_size_sufficient_n() {
+        let chains = vec![vec![1.0, 2.0, 3.0, 4.0]];
+        let ess = compute_effective_sample_size(&chains);
+        assert!(ess.unwrap().is_finite());
+    }
+
+    #[test]
+    pub fn compute_effective_sample_size_nan() {
+        let chains = vec![vec![1.0, f64::NAN, 3.0, 4.0]];
+        let ess = compute_effective_sample_size(&chains);
+        assert!(ess.is_err());
+    }
+
+    #[test]
+    pub fn compute_effective_sample_size_constant() {
+        let chains = vec![vec![1.0, 1.0, 1.0, 1.0]];
+        let ess = compute_effective_sample_size(&chains);
+        assert!(ess.is_err());
+    }
 }
