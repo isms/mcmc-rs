@@ -56,7 +56,7 @@ pub fn read_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
     let f = BufReader::new(f);
     for line in f.lines().skip(skip_rows).take(n_rows) {
         if let Ok(line) = line {
-            for (idx, value) in line.split(',').into_iter().enumerate() {
+            for (idx, value) in line.split(',').enumerate() {
                 if idx >= result.len() {
                     result.push(Vec::new())
                 }
