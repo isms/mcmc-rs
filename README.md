@@ -53,6 +53,9 @@ References
        for assessing convergence of MCMC, 2019. Retrieved from
        [http://arxiv.org/abs/1903.08008]().
 
+  [4]: Geyer, Charles J. Introduction to Markov Chain Monte Carlo.
+       _Handbook of Markov Chain Monte Carlo_, edited by Steve Brooks, Andrew Gelman,
+       Galin L. Jones, and Xiao-Li Meng. Chapman; Hall/CRC. 2011.
 
 Acknowledgements
 ----------------
