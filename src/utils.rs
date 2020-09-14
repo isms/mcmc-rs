@@ -22,6 +22,7 @@ pub fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
     Ok(arr.iter().map(|x| (x - xbar).powi(2)).sum::<f64>() / (arr.len() as f64 - 1.0))
 }
 
+/// Clone a 2D array into one long 1D array.
 pub fn flatten(chains: &Array2) -> Array1 {
     let mut flattened = Vec::new();
     for chain in chains {
@@ -58,6 +59,16 @@ pub fn split_chains(chains: Array2) -> Result<Array2, Error> {
     Ok(split_draws)
 }
 
+/// Simplified CSV reader for tesing purposes only; does not actually implement
+/// parsing for headers, quotation, or other more advanced features. Assumes
+/// that all values aside from the commas will be numeric.
+///
+/// # Arguments
+/// * `skip_rows` - Number of rows to skip before numeric values. For example,
+///                 if there is a header row you can pass in the value `1`.
+/// * `n_rows` - Number of rows to read in. Use if you only want a certain
+///              subset of rows or if there are improper rows after the numeric
+///              rows (e.g. in Stan sample files there are commented rows at the end).
 pub fn read_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
     let mut result: Array2 = Vec::new();
     let f = File::open(&path).unwrap();

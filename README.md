@@ -2,8 +2,11 @@ mcmc
 ====
 
 A Rust library implementing various MCMC diagnostics and utilities, such as Gelman Rubin
-potential scale reduction factor (R hat), effective sample size, chain splitting,
+potential scale reduction factor (R hat), effective sample size (ESS), chain splitting,
 and others.
+
+This crate is language agnostic and intended to work with the outputs of any MCMC sampler
+(e.g. Stan, PyMC3, Turing.jl, etc).
 
 Implementation
 --------------
