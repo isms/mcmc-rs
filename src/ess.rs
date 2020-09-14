@@ -17,6 +17,11 @@ use arima::acf;
 ///
 /// Based on reference implementation in Stan v2.4.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138]()
+///
+///
+/// # Arguments
+/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+///              the same parameter
 pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_chains = chains.len();
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
@@ -134,6 +139,11 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 ///
 /// Based on reference implementation in Stan v2.4.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199]()
+///
+///
+/// # Arguments
+/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+///              the same parameter
 pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
     // trim chains to the length of the shortest chain
@@ -151,6 +161,11 @@ pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error
 ///
 /// See the Stan reference manual section
 /// ["Estimation of MCMC Standard Error"](https://mc-stan.org/docs/2_24/reference-manual/effective-sample-size-section.html#estimation-of-mcmc-standard-error)
+///
+///
+/// # Arguments
+/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+///              the same parameter
 pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
     let ess = compute_effective_sample_size(&chains)?;
     let var = sample_variance(&flatten(chains))?;
