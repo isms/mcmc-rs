@@ -45,9 +45,6 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
         return Err(anyhow!(msg));
     }
 
-    // check if any element is NaN
-    // TODO: check
-
     let mut chain_acov: Array2 = Vec::new();
     let mut chain_mean: Array1 = Vec::new();
     let mut chain_var: Array1 = Vec::new();
