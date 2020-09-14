@@ -13,7 +13,7 @@ use anyhow::{Error, Result};
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
 ///
 /// # Arguments
-/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+/// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///              the same parameter
 pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let m = chains.len();
@@ -51,7 +51,7 @@ pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
 ///
 /// # Arguments
-/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+/// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///              the same parameter
 pub fn split_potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();

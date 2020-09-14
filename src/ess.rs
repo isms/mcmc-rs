@@ -20,7 +20,7 @@ use arima::acf;
 ///
 ///
 /// # Arguments
-/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+/// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///              the same parameter
 pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_chains = chains.len();
@@ -142,7 +142,7 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 ///
 ///
 /// # Arguments
-/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+/// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///              the same parameter
 pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
@@ -164,7 +164,7 @@ pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error
 ///
 ///
 /// # Arguments
-/// * `chains` - Reference to a vector of chains, each of which is vectors of samples for
+/// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///              the same parameter
 pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
     let ess = compute_effective_sample_size(&chains)?;
