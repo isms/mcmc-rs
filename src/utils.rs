@@ -7,7 +7,7 @@ use std::{
 };
 
 /// Compute the arithmetic mean of an array.
-pub fn mean(arr: &[f64]) -> Result<f64, Error> {
+pub(in crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
     if arr.is_empty() {
         return Err(anyhow!("Can't take mean of empty array"));
     }
@@ -17,13 +17,13 @@ pub fn mean(arr: &[f64]) -> Result<f64, Error> {
 }
 
 /// Compute the sample variance of an array using Bessel's correction.
-pub fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
+pub(in crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
     let xbar = mean(arr)?;
     Ok(arr.iter().map(|x| (x - xbar).powi(2)).sum::<f64>() / (arr.len() as f64 - 1.0))
 }
 
 /// Clone a 2D array into one long 1D array.
-pub fn flatten(chains: &Array2) -> Array1 {
+pub(in crate) fn flatten(chains: &Array2) -> Array1 {
     let mut flattened = Vec::new();
     for chain in chains {
         flattened.extend(chain);
