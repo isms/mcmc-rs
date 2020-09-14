@@ -11,11 +11,12 @@ This crate is language agnostic and intended to work with the outputs of any MCM
 Implementation
 --------------
 
-Currently we expect plain vectors of `f64` floating point numbers.
+Currently we expect plain vectors of `f64` floating point numbers, but this may be
+worth generalizing to `f32`s as well (see roadmap below).
 
 Implementations for some of these diagnostics vary slightly, so reference implementations
-are based on [Stan](https://github.com/stan-dev/stan), and unit tests are adapted to ensure
-matching behavior.
+are based on [Stan](https://github.com/stan-dev/stan), and unit tests are adapted from the
+Stan codebase to ensure matching behavior.
 
 Roadmap
 -------
@@ -34,6 +35,7 @@ Roadmap
 
 **Data structures**
 
+- [ ] Introduce `Num` type to generalize our implementations to work for `f32` or `f64`.
 - [ ] Would it be helpful to have some kind of struct that can represent
       one or more sample chains with a parameter name?
 
