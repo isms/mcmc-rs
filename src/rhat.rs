@@ -3,27 +3,24 @@ use crate::{Array1, Array2};
 use anyhow::{Error, Result};
 
 /// Computes the potential scale reduction (Rhat) for the specified
-/// parameter across all kept samples.
+/// parameter across all kept samples.  Chains are trimmed from the
+/// back to match the length of the shortest chain.
 ///
 /// See more details in Stan reference manual section
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction).
 ///
-/// Current implementation assumes draws are stored in contiguous
-/// blocks of memory.  Chains are trimmed from the back to match the
-/// length of the shortest chain.
-///
 /// Based on reference implementation in Stan v2.24.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
-pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, Error> {
+pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let m = chains.len();
     let n = chains.iter().map(|c| c.len()).min().unwrap();
     let mut split_chain_mean: Array1 = Vec::new();
     let mut split_chain_var: Array1 = Vec::new();
 
     for chain in chains.iter().take(m) {
-        let chain_mean = mean(&chain)?;
+        let chain_mean = mean(chain)?;
         split_chain_mean.push(chain_mean);
-        let chain_var = sample_variance(&chain)?;
+        let chain_var = sample_variance(chain)?;
         split_chain_var.push(chain_var);
     }
 
@@ -39,17 +36,16 @@ pub fn potential_scale_reduction_factor(chains: Array2) -> Result<f64, Error> {
 /// specified parameter across all kept samples.  When the number of
 /// total draws N is odd, the (N+1)/2th draw is ignored.
 ///
-/// See more details in Stan reference manual section
-/// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction)
-///
-/// Current implementation assumes draws are stored in contiguous
-/// blocks of memory.  Chains are trimmed from the back to match the
+/// Chains are trimmed from the back to match the
 /// length of the shortest chain.  Argument size will be broadcast to
 /// same length as draws.
 ///
+/// See more details in Stan reference manual section
+/// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction)
+///
 /// Based on reference implementation in Stan v2.24.0 at
 /// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
-pub fn split_potential_scale_reduction_factor(chains: Array2) -> Result<f64, Error> {
+pub fn split_potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
     // trim chains to the length of the shortest chain
     let mut trimmed = Vec::new();
@@ -57,7 +53,7 @@ pub fn split_potential_scale_reduction_factor(chains: Array2) -> Result<f64, Err
         trimmed.push(chain[..num_draws].to_vec());
     }
     let split = split_chains(trimmed)?;
-    potential_scale_reduction_factor(split)
+    potential_scale_reduction_factor(&split)
 }
 
 #[cfg(test)]
@@ -119,7 +115,7 @@ mod tests {
         ];
         for (i, expected) in expected_rhats.iter().enumerate() {
             let chains = vec![samples1[i + 4].clone(), samples2[i + 4].clone()];
-            let actual = potential_scale_reduction_factor(chains).unwrap();
+            let actual = potential_scale_reduction_factor(&chains).unwrap();
             assert_abs_diff_eq!(actual, expected, epsilon = 1e-6);
         }
     }
@@ -143,7 +139,7 @@ mod tests {
         ];
         for (i, expected) in expected_rhats.iter().enumerate() {
             let chains = vec![samples1[i + 4].clone(), samples2[i + 4].clone()];
-            let actual = split_potential_scale_reduction_factor(chains).unwrap();
+            let actual = split_potential_scale_reduction_factor(&chains).unwrap();
             assert_abs_diff_eq!(actual, expected, epsilon = 1e-6);
         }
     }
