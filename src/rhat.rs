@@ -10,7 +10,7 @@ use anyhow::{Error, Result};
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction).
 ///
 /// Based on reference implementation in Stan v2.24.0 at
-/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
+/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
@@ -48,7 +48,7 @@ pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction)
 ///
 /// Based on reference implementation in Stan v2.24.0 at
-/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp]()
+/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for

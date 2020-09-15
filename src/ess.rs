@@ -16,7 +16,7 @@ use arima::acf;
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
 ///
 /// Based on reference implementation in Stan v2.4.0 at
-/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138]()
+/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138
 ///
 ///
 /// # Arguments
@@ -138,7 +138,7 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
 ///
 /// Based on reference implementation in Stan v2.4.0 at
-/// [https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199]()
+/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199
 ///
 ///
 /// # Arguments
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_compute_effective_sample_size_two_chains() {
         // Based on the unit test in Stan 2.2.4 but with more digits of precision
-        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L59-L96
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
         let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
@@ -365,7 +365,7 @@ mod tests {
     #[test]
     fn test_compute_split_effective_sample_size_two_chains() {
         // Based on the unit test in Stan 2.2.4 but with more digits of precision
-        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L170-L208
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
         let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
@@ -458,8 +458,8 @@ mod tests {
 
     #[test]
     fn test_compute_estimated_mcse() {
-        // Based on the unit test in Stan 2.2.4 but with more digits of precision
-        // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
+        // Based on running [stansummary](https://mc-stan.org/docs/2_24/cmdstan-guide/stansummary.html) from the
+        // CmdStan package with extra digits of precision.
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
         let samples2 = read_csv(&d.join("test/stan/blocker.2.csv"), 41, 1000);
