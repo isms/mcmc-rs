@@ -12,6 +12,7 @@ description = """\
 license = "MIT"
 keywords = ["mcmc", "monte", "carlo", "markov"]
 repository = "https://github.com/isms/mcmc-rs/"
+documentation = "https://docs.rs/mcmc"
 
 [dependencies]
 anyhow = "1.0.32"
