@@ -3,6 +3,12 @@ name = "mcmc"
 version = "0.1.3"
 authors = ["Isaac Slavitt <isaac.slavitt@gmail.com>"]
 edition = "2018"
+description = """\
+  A Rust library implementing various MCMC \
+  diagnostics and utilities, such as Gelman Rubin potential \
+  scale reduction factor (R hat), effective sample size (ESS), \
+  chain splitting, and others.\
+  """
 license = "MIT"
 keywords = ["mcmc", "monte", "carlo", "markov"]
 repository = "https://github.com/isms/mcmc-rs/"
