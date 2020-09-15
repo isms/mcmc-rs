@@ -3,6 +3,9 @@ name = "mcmc"
 version = "0.1.2"
 authors = ["Isaac Slavitt <isaac.slavitt@gmail.com>"]
 edition = "2018"
+license = "MIT"
+keywords = ["mcmc", "monte carlo", "markov", "gelman", "rubin", "rhat"]
+repository = "https://github.com/isms/mcmc-rs/"
 
 [dependencies]
 anyhow = "1.0.32"
