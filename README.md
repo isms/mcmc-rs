@@ -10,7 +10,7 @@ mcmc
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: LICENSE
 [build-badge]: https://github.com/isms/mcmc-rs/workflows/Rust/badge.svg
-[build-url]: https://github.com/isms/mcmc-rs/action
+[build-url]: https://github.com/isms/mcmc-rs/actions
 
 A Rust library implementing various MCMC diagnostics and utilities, such as Gelman Rubin
 potential scale reduction factor (R hat), effective sample size (ESS), chain splitting,
