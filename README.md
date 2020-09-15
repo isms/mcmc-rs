@@ -1,6 +1,17 @@
 mcmc
 ====
 
+[![Crates.io][crates-badge]][crates-url]
+[![MIT licensed][mit-badge]][mit-url]
+[![Actions Status][build-badge]][build-url]
+
+[crates-badge]: https://img.shields.io/crates/v/mcmc.svg
+[crates-url]: https://crates.io/crates/mmcmc
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: LICENSE
+[build-badge]: https://github.com/isms/mcmc-rs/workflows/Rust/badge.svg
+[build-url]: https://github.com/isms/mcmc-rs/action
+
 A Rust library implementing various MCMC diagnostics and utilities, such as Gelman Rubin
 potential scale reduction factor (R hat), effective sample size (ESS), chain splitting,
 and others.
