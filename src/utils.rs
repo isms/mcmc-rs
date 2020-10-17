@@ -1,5 +1,7 @@
 use crate::{Array1, Array2};
 use anyhow::{anyhow, Error, Result};
+use average::Mean;
+use average::Variance;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -11,15 +13,17 @@ pub(in crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
     if arr.is_empty() {
         return Err(anyhow!("Can't take mean of empty array"));
     }
-    let sum = arr.iter().sum::<f64>();
-    let count = arr.len() as f64;
-    Ok(sum / count)
+    let mean = arr.iter().collect::<Mean>();
+    Ok(mean.mean())
 }
 
 /// Compute the sample variance of an array using Bessel's correction.
 pub(in crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
-    let xbar = mean(arr)?;
-    Ok(arr.iter().map(|x| (x - xbar).powi(2)).sum::<f64>() / (arr.len() as f64 - 1.0))
+    if arr.is_empty() {
+        return Err(anyhow!("Can't take variance of empty array"));
+    }
+    let var: Variance = arr.iter().collect();
+    Ok(var.sample_variance())
 }
 
 /// Clone a 2D array into one long 1D array.
