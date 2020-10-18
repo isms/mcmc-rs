@@ -1,4 +1,4 @@
-MCMC diangostics in Rust
+MCMC diagnostics in Rust
 ====
 
 [![Crates.io][crates-badge]][crates-url]
