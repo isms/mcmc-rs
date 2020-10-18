@@ -1,4 +1,4 @@
-MCMC in Rust
+MCMC diangostics in Rust
 ====
 
 [![Crates.io][crates-badge]][crates-url]
