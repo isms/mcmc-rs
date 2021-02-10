@@ -2,11 +2,14 @@ MCMC diagnostics in Rust
 ====
 
 [![Crates.io][crates-badge]][crates-url]
+[![docs.rs][docs-badge]][docs-url]
 [![MIT licensed][mit-badge]][mit-url]
 [![Actions Status][build-badge]][build-url]
 
 [crates-badge]: https://img.shields.io/crates/v/mcmc.svg
 [crates-url]: https://crates.io/crates/mcmc
+[docs-badge]: https://docs.rs/mcmc/badge.svg
+[docs-url]: https://docs.rs/mcmc
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: LICENSE
 [build-badge]: https://github.com/isms/mcmc-rs/workflows/Rust/badge.svg
