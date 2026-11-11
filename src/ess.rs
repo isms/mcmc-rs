@@ -1,8 +1,8 @@
+use crate::autocov::autocovariance;
 use crate::chains::prepare_chains;
 use crate::utils::{mean, sample_variance, shortest_chain_len, split_chain_views};
 use crate::{Array1, Array2, Sample};
 use anyhow::{Error, Result, anyhow};
-use arima::acf;
 use average::Variance;
 
 /// Computes the effective sample size (ESS) for the specified
@@ -67,7 +67,7 @@ pub(crate) fn compute_effective_sample_size_impl<C: AsRef<[f64]>>(
     let mut chain_var: Array1 = Vec::new();
     for chain in chains.iter() {
         let chain = &chain.as_ref()[..num_draws];
-        let acov = acf::acf(chain, None, true)?;
+        let acov = autocovariance(chain.iter().copied());
         chain_mean.push(mean(chain)?);
         chain_var.push(acov[0] * (num_draws as f64 / (num_draws as f64 - 1.0)));
         chain_acov.push(acov);
@@ -251,7 +251,7 @@ mod tests {
             -0.0208019612,
             0.0681360996,
         ];
-        let actual_acov = acf::acf(&arr, None, true).unwrap();
+        let actual_acov = autocovariance(arr.iter().copied());
 
         for i in 0..arr.len() {
             assert_abs_diff_eq!(actual_acov[i], stan_acov[i], epsilon = 1e-10);
