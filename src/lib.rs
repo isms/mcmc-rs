@@ -5,6 +5,13 @@
 //! This crate is language agnostic and intended to work with the outputs of any MCMC sampler
 //! (e.g. Stan, PyMC3, Turing.jl, etc.)
 
+mod chains;
+pub use chains::Sample;
+
+/// Adapters for two-dimensional ndarray views with chains on axis 0 and draws on axis 1.
+#[cfg(feature = "ndarray")]
+pub mod ndarray;
+
 /// Effective Sample Size (ESS)
 pub mod ess;
 /// Gelman-Rubin potential scale reduction (Rhat), including split Rhat

@@ -1,4 +1,4 @@
-use crate::{Array1, Array2};
+use crate::Array2;
 use anyhow::{Error, Result, anyhow};
 use average::Mean;
 use average::Variance;
@@ -19,20 +19,20 @@ pub(crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
 
 /// Compute the sample variance of an array using Bessel's correction.
 pub(crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
-    if arr.is_empty() {
-        return Err(anyhow!("Can't take variance of empty array"));
+    if arr.len() < 2 {
+        return Err(anyhow!("Sample variance requires at least two values"));
     }
     let var: Variance = arr.iter().collect();
     Ok(var.sample_variance())
 }
 
-/// Clone a 2D array into one long 1D array.
-pub(crate) fn flatten(chains: &Array2) -> Array1 {
-    let mut flattened = Vec::new();
-    for chain in chains {
-        flattened.extend(chain);
-    }
-    flattened
+/// Find the common prefix length, rejecting an empty collection of chains.
+pub(crate) fn shortest_chain_len<T, C: AsRef<[T]>>(chains: &[C]) -> Result<usize> {
+    chains
+        .iter()
+        .map(|chain| chain.as_ref().len())
+        .min()
+        .ok_or_else(|| anyhow!("Must provide at least one chain"))
 }
 
 /// Splits each chain into two chains of equal length.  When the
@@ -41,29 +41,47 @@ pub(crate) fn flatten(chains: &Array2) -> Array1 {
 /// See more details in Stan reference manual section
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation).
 ///
-/// Current implementation assumes chains are all of equal size.
+/// Chains are trimmed from the back to match the shortest chain.
+/// Each chain must contain at least two draws.
 pub fn split_chains(chains: Array2) -> Result<Array2, Error> {
-    if chains.is_empty() {
-        return Err(anyhow!("Can't split empty array of chains"));
-    }
-    let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
-    if num_draws < 1 {
-        return Err(anyhow!("No samples to split"));
+    Ok(split_chain_views(&chains)?
+        .into_iter()
+        .map(<[f64]>::to_vec)
+        .collect())
+}
+
+/// Split chains into borrowed halves without copying the draws.
+///
+/// Accepts vectors, slices, and fixed-size arrays of any element type. Chains
+/// are trimmed to the shortest length, which must be at least two. An odd
+/// length drops the middle draw. Only the vector of slice references is allocated.
+///
+/// ```
+/// let chains = [[1.0_f32, 2.0, 3.0, 4.0, 5.0]];
+/// let halves = mcmc::utils::split_chain_views(&chains)?;
+/// assert_eq!(halves, [&chains[0][..2], &chains[0][3..]]);
+/// # Ok::<(), anyhow::Error>(())
+/// ```
+pub fn split_chain_views<T, C: AsRef<[T]>>(chains: &[C]) -> Result<Vec<&[T]>, Error> {
+    let num_draws = shortest_chain_len(chains)?;
+    if num_draws < 2 {
+        return Err(anyhow!("Must have at least two samples to split"));
     }
     let (half, offset) = if num_draws % 2 == 0 {
         (num_draws / 2, 0)
     } else {
         ((num_draws - 1) / 2, 1)
     };
-    let mut split_draws = Vec::new();
+    let mut split_draws = Vec::with_capacity(chains.len() * 2);
     for chain in chains {
-        split_draws.push(chain[..half].to_vec());
-        split_draws.push(chain[(half + offset)..].to_vec());
+        let chain = chain.as_ref();
+        split_draws.push(&chain[..half]);
+        split_draws.push(&chain[(half + offset)..num_draws]);
     }
     Ok(split_draws)
 }
 
-/// Simplified CSV reader for tesing purposes only; does not actually implement
+/// Simplified CSV reader for testing purposes only; does not actually implement
 /// parsing for headers, quotation, or other more advanced features. Assumes
 /// that all values aside from the commas will be numeric.
 ///
@@ -160,15 +178,5 @@ mod tests {
         assert_eq!(split[1], vec![4.0, 4.5]);
         assert_eq!(split[2], vec![5.0, 6.0]);
         assert_eq!(split[3], vec![8.0, 8.5]);
-    }
-
-    #[test]
-    fn test_flatten() {
-        // Regular split with even numbers
-        let a = vec![1.0, 2.0, 3.0, 4.0];
-        let b = vec![5.0, 6.0, 7.0, 8.0];
-        let chains = vec![a, b];
-        let flattened = flatten(&chains);
-        assert_eq!(flattened, vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]);
     }
 }
