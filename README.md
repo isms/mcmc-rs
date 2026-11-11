@@ -4,7 +4,6 @@ MCMC diagnostics in Rust
 [![Crates.io][crates-badge]][crates-url]
 [![docs.rs][docs-badge]][docs-url]
 [![MIT licensed][mit-badge]][mit-url]
-[![Actions Status][build-badge]][build-url]
 
 [crates-badge]: https://img.shields.io/crates/v/mcmc.svg
 [crates-url]: https://crates.io/crates/mcmc
@@ -12,15 +11,27 @@ MCMC diagnostics in Rust
 [docs-url]: https://docs.rs/mcmc
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: LICENSE
-[build-badge]: https://github.com/isms/mcmc-rs/workflows/Rust/badge.svg
-[build-url]: https://github.com/isms/mcmc-rs/actions
 
 A Rust library implementing various MCMC diagnostics and utilities, such as Gelman Rubin
 potential scale reduction factor (R hat), effective sample size (ESS), chain splitting,
 and others.
 
 This crate is language agnostic and intended to work with the outputs of any MCMC sampler
-(e.g. Stan, PyMC3, Turing.jl, etc).
+(e.g. Stan, PyMC, Turing.jl, etc).
+
+Development
+-----------
+
+Requires Rust 1.85 or later and uses the Rust 2024 edition. CI tests both the
+minimum supported Rust version and current stable Rust.
+
+```sh
+cargo test --all-targets
+cargo test --doc
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo doc --no-deps
+```
 
 Implementation
 --------------
@@ -70,7 +81,7 @@ References
   [3]: Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, Paul-Christian
        Burkner. Rank-normalization, folding, and localization: An improved R-hat
        for assessing convergence of MCMC, 2019. Retrieved from
-       [http://arxiv.org/abs/1903.08008]().
+       [https://arxiv.org/abs/1903.08008](https://arxiv.org/abs/1903.08008).
 
   [4]: Geyer, Charles J. Introduction to Markov Chain Monte Carlo.
        _Handbook of Markov Chain Monte Carlo_, edited by Steve Brooks, Andrew Gelman,

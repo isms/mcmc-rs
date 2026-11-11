@@ -2,7 +2,8 @@
 name = "mcmc"
 version = "0.1.3"
 authors = ["Isaac Slavitt <isaac.slavitt@gmail.com>"]
-edition = "2018"
+edition = "2024"
+rust-version = "1.85"
 description = """\
   A Rust library implementing various MCMC \
   diagnostics and utilities, such as Gelman Rubin potential \
@@ -15,7 +16,9 @@ repository = "https://github.com/isms/mcmc-rs/"
 documentation = "https://docs.rs/mcmc"
 
 [dependencies]
-anyhow = "1.0.32"
-approx = "0.3.2"
-arima = "0.2.0"
-average = "0.10.6"
+arima = "0.3"
+anyhow = "1"
+average = "0.17"
+
+[dev-dependencies]
+approx = "0.5"

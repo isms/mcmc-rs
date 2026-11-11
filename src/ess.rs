@@ -1,6 +1,6 @@
 use crate::utils::{flatten, mean, sample_variance, split_chains};
 use crate::{Array1, Array2};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use arima::acf;
 
 /// Computes the effective sample size (ESS) for the specified
@@ -15,13 +15,13 @@ use arima::acf;
 /// See more details in Stan reference manual section
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
 ///
-/// Based on reference implementation in Stan v2.4.0 at
-/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138
+/// Based on reference implementation in Stan v2.24.0 at
+/// <https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L32-L138>
 ///
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
-///              the same parameter
+///   the same parameter
 pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_chains = chains.len();
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
@@ -33,9 +33,9 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let mut curr = chains[0][0];
     let mut prev = chains[0][0];
     let mut all_same = true;
-    for c in 0..chains.len() {
-        for i in 0..chains[0].len() {
-            curr = chains[c][i];
+    for chain in chains {
+        for &draw in &chain[..chains[0].len()] {
+            curr = draw;
             if !curr.is_finite() {
                 return Err(anyhow!("All values must be finite to compute ESS"));
             }
@@ -54,8 +54,8 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let mut chain_mean: Array1 = Vec::new();
     let mut chain_var: Array1 = Vec::new();
     for chain in chains.iter() {
-        let acov = acf::acf(&chain, None, true).unwrap();
-        chain_mean.push(mean(&chain)?);
+        let acov = acf::acf(chain, None, true).unwrap();
+        chain_mean.push(mean(chain)?);
         chain_var.push(acov[0] * num_draws as f64 / (num_draws as f64 - 1.0));
         chain_acov.push(acov);
     }
@@ -137,13 +137,13 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 /// See more details in Stan reference manual section
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
 ///
-/// Based on reference implementation in Stan v2.4.0 at
-/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199
+/// Based on reference implementation in Stan v2.24.0 at
+/// <https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp#L185-L199>
 ///
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
-///              the same parameter
+///   the same parameter
 pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
     // trim chains to the length of the shortest chain
@@ -165,9 +165,9 @@ pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
-///              the same parameter
+///   the same parameter
 pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
-    let ess = compute_effective_sample_size(&chains)?;
+    let ess = compute_effective_sample_size(chains)?;
     let var = sample_variance(&flatten(chains))?;
     Ok((var / ess).sqrt())
 }
@@ -176,6 +176,7 @@ pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
 mod tests {
     use super::*;
     use crate::utils::read_csv;
+    use approx::assert_abs_diff_eq;
     use std::path::PathBuf;
 
     #[test]
@@ -233,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_compute_effective_sample_size_one_chain() {
-        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // Based on the unit test in Stan 2.24.0 but with more digits of precision
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L22-L57
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
@@ -298,7 +299,7 @@ mod tests {
 
     #[test]
     fn test_compute_effective_sample_size_two_chains() {
-        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // Based on the unit test in Stan 2.24.0 but with more digits of precision
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L59-L96
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
@@ -364,7 +365,7 @@ mod tests {
 
     #[test]
     fn test_compute_split_effective_sample_size_two_chains() {
-        // Based on the unit test in Stan 2.2.4 but with more digits of precision
+        // Based on the unit test in Stan 2.24.0 but with more digits of precision
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_effective_sample_size_test.cpp#L170-L208
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
