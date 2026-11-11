@@ -1,0 +1,167 @@
+{
+  "reference": {
+    "r_version": "4.5.2",
+    "posterior_version": "1.7.1",
+    "posterior_commit": "540cc15f7f3a81913f2a02a0ac04700e0d352a20",
+    "package_url": "https://api.github.com/repos/stan-dev/posterior/tarball/540cc15f7f3a81913f2a02a0ac04700e0d352a20",
+    "package_sha256": "698a1bc2076c5abb6cd6ba99edd30e049df1d1025b63ea449bdcafad6f7708f4",
+    "legacy_source": "https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp",
+    "matrix_stats_version": "1.5.0"
+  },
+  "fixtures": [
+    {
+      "id": "posterior_eight_schools",
+      "type": "posterior",
+      "example": "eight_schools",
+      "description": "Hierarchical eight-schools model, saved Stan draws from posterior's examples.",
+      "license": "BSD-3-Clause",
+      "parameters": [
+        [
+          "mu",
+          "mu"
+        ],
+        [
+          "tau",
+          "tau"
+        ],
+        [
+          "theta_1",
+          "theta[1]"
+        ]
+      ]
+    },
+    {
+      "id": "posterior_multi_normal",
+      "type": "posterior",
+      "example": "multi_normal",
+      "description": "Three-dimensional multivariate normal mean/covariance model, saved Stan draws from posterior's examples.",
+      "license": "BSD-3-Clause",
+      "parameters": [
+        [
+          "mu_1",
+          "mu[1]"
+        ],
+        [
+          "mu_2",
+          "mu[2]"
+        ],
+        [
+          "sigma_1_2",
+          "Sigma[1,2]"
+        ]
+      ]
+    },
+    {
+      "id": "arviz_centered_eight",
+      "type": "netcdf",
+      "url": "https://raw.githubusercontent.com/arviz-devs/arviz_example_data/e56f5b5d7ae6e605f763661934ced3ac55a6f490/data/centered_eight.nc",
+      "sha256": "1e281b47f18f36e381ed3b1634c89d5f2c8bfb3b51f6c8637a934332b0b4d304",
+      "cache_file": "centered_eight.nc",
+      "description": "Centered eight-schools fit documented by ArviZ as difficult for NUTS; PyMC 5.20.0 draws.",
+      "license": "Apache-2.0",
+      "source_metadata": "https://github.com/arviz-devs/arviz_example_data/blob/e56f5b5d7ae6e605f763661934ced3ac55a6f490/data_local.json",
+      "parameters": [
+        [
+          "mu",
+          "mu",
+          []
+        ],
+        [
+          "tau",
+          "tau",
+          []
+        ],
+        [
+          "theta_1",
+          "theta",
+          [
+            0
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "arviz_radon",
+      "type": "netcdf",
+      "url": "https://ndownloader.figshare.com/files/24067472",
+      "sha256": "a9b2b4adf1bf9c5728e5bdc97107e69c4fc8d8b7d213e9147233b57be8b4587b",
+      "cache_file": "radon.nc",
+      "description": "Hierarchical Minnesota radon regression; PyMC3 3.9.2 draws.",
+      "author": "Oriol Abril Pla",
+      "license": "Apache-2.0",
+      "source_metadata": "https://api.figshare.com/v2/articles/12711695/versions/1",
+      "parameters": [
+        [
+          "g_0",
+          "g",
+          [
+            0
+          ]
+        ],
+        [
+          "b",
+          "b",
+          []
+        ],
+        [
+          "sigma_a",
+          "sigma_a",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "arviz_rugby",
+      "type": "netcdf",
+      "url": "https://ndownloader.figshare.com/files/44916469",
+      "sha256": "f4a5e699a8a4cc93f722eb97929dd7c4895c59a2183f05309f5082f3f81eb228",
+      "cache_file": "rugby.nc",
+      "description": "Six Nations rugby attack/defence and home advantage model; PyMC 5.10.4+7.g34d2a5d9 draws.",
+      "author": "Oriol Abril Pla",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "source_metadata": "https://api.figshare.com/v2/articles/25293310/versions/2",
+      "parameters": [
+        [
+          "home",
+          "home",
+          []
+        ],
+        [
+          "attack_0",
+          "atts",
+          [
+            0
+          ]
+        ],
+        [
+          "sd_def",
+          "sd_def",
+          []
+        ]
+      ]
+    }
+  ],
+  "licenses": [
+    {
+      "file": "posterior-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/stan-dev/posterior/540cc15f7f3a81913f2a02a0ac04700e0d352a20/LICENSE.md",
+      "sha256": "3a1cc8439909fee41503574428774f602a20c7321307c7c75b93678a6a179ba3"
+    },
+    {
+      "file": "arviz-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/arviz-devs/arviz_example_data/e56f5b5d7ae6e605f763661934ced3ac55a6f490/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "file": "stan-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/stan-dev/stan/v2.24.0/LICENSE.md",
+      "sha256": "aa2930f0a281e429c72f79a4189a188fcf20b0f2bbd4c7d030f1d5060ea649dc"
+    },
+    {
+      "file": "CC-BY-4.0.txt",
+      "url": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    }
+  ]
+}

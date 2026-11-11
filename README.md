@@ -32,6 +32,7 @@ cargo test --all-targets --all-features
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo doc --no-deps
+python3 scripts/validation/generate.py --check
 ```
 
 Implementation
@@ -95,6 +96,27 @@ If an estimate or its required variance cannot be represented, the function
 returns an error instead of a non-finite, negative, or spuriously zero result.
 Negative estimates of the classical truncated autocorrelation time also return
 errors, even when all input draws are finite and nonconstant.
+
+External validation
+-------------------
+
+In addition to the original two-chain Stan blocker fixture, tests use five
+saved draw sets from `posterior` and ArviZ: eight schools (two independent fits),
+a multivariate normal model, hierarchical radon regression, and rugby.
+Three selected parameters per draw set give 15 cross-implementation cases,
+each with four chains and either 100 or 500 stored posterior draws per chain.
+
+Checked-in references were generated with R 4.5.2, `posterior` 1.7.1, and an
+independent R implementation of the Stan 2.24 ESS formula. Tests compare
+classical Rhat, split Rhat, ESS, split ESS, and unsplit MCSE across scalar/SIMD,
+borrowed slices, `f32`, and contiguous/strided ndarray inputs. Cargo tests use
+the saved files without R or network access.
+
+Current and legacy ESS agree on the selected external cases, but differ on
+some boundary inputs. `posterior::mcse_mean` also uses split ESS by default,
+whereas this crate's MCSE uses unsplit ESS. Both forms and focused boundary
+probes are recorded. See [fixture provenance and reproduction](test/external/README.md)
+for source hashes, versions, licenses, estimator differences, and regeneration.
 
 SIMD and benchmarks
 -------------------
