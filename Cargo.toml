@@ -15,10 +15,15 @@ keywords = ["mcmc", "monte", "carlo", "markov"]
 repository = "https://github.com/isms/mcmc-rs/"
 documentation = "https://docs.rs/mcmc"
 
+[features]
+default = []
+ndarray = ["dep:ndarray"]
+
 [dependencies]
 arima = "0.3"
 anyhow = "1"
 average = "0.17"
+ndarray = { version = "0.17", optional = true }
 
 [dev-dependencies]
 approx = "0.5"

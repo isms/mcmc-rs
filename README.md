@@ -28,6 +28,7 @@ minimum supported Rust version and current stable Rust.
 ```sh
 cargo test --all-targets
 cargo test --doc
+cargo test --all-targets --all-features
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo doc --no-deps
@@ -36,37 +37,75 @@ cargo doc --no-deps
 Implementation
 --------------
 
-Currently we expect plain vectors of `f64` floating point numbers, but this may be
-worth generalizing to `f32`s as well (see roadmap below).
+The public API accepts vectors, borrowed slices, and native arrays of `f32` or
+`f64` draws, grouped by chain. Calculations and results use `f64`. The `Array1`
+and `Array2` aliases remain `Vec<f64>` and `Vec<Vec<f64>>` for existing callers.
+Diagnostics trim each chain to the length of the shortest chain. Splitting drops
+the middle draw when that common length is odd.
+
+```rust
+let draws = [[1.0_f32, 3.0, 2.0, 4.0], [2.0, 4.0, 1.0, 3.0]];
+let ess = mcmc::ess::compute_effective_sample_size(&draws).unwrap();
+let halves = mcmc::utils::split_chain_views(&draws).unwrap();
+```
+
+`f64` input buffers are borrowed; `f32` inputs are widened once per retained
+chain. `split_chain_views` returns borrowed halves without copying draws.
+The existing consuming `split_chains` function still returns owned vectors.
+Existing direct vector calls continue to work. With generic inputs, an untyped
+empty input or an ambiguous `.collect()` needs a type annotation such as `Array2`.
+Explicit diagnostic function pointers now take `&[Vec<f64>]` instead of `&Array2`.
+
+Enable the optional `ndarray` feature for `mcmc::ndarray` adapters. These accept
+`ndarray::ArrayView2` with **chains on axis 0 and draws on axis 1**:
+
+```rust
+let draws = ndarray::array![[1.0_f64, 3.0, 2.0, 4.0], [2.0, 4.0, 1.0, 3.0]];
+let rhat = mcmc::ndarray::potential_scale_reduction_factor(draws.view()).unwrap();
+let halves = mcmc::ndarray::split_chain_views(draws.view()).unwrap();
+```
+
+Contiguous `f64` rows are borrowed. Column-major, transposed, reversed, and
+strided views work too; noncontiguous rows are copied in their logical order.
+`f32` rows are converted to contiguous `f64` buffers.
+The ndarray `split_chain_views` adapter borrows the original samples and
+preserves strides and element type, including for noncontiguous inputs.
 
 Implementations for some of these diagnostics vary slightly, so reference implementations
-are based on [Stan](https://github.com/stan-dev/stan), and unit tests are adapted from the
-Stan codebase to ensure matching behavior.
+are based on Stan 2.24.0, and unit tests adapted from that version check matching
+behavior. Rhat and split Rhat currently use the classical variance-based estimator;
+rank normalization and folding are still planned. ESS is the classical estimator,
+and MCSE estimates the error of the sample mean.
+
+Invalid inputs return errors: ESS and MCSE need at least four retained draws per
+chain; split ESS needs at least eight before splitting. Rhat needs two chains with
+two draws each; split Rhat can split one chain with at least four draws. Diagnostics
+reject non-finite retained draws and identical constant samples. Rhat also requires
+positive within-chain variance. See the
+[Stan reference manual](https://mc-stan.org/docs/reference-manual/analysis.html)
+for the definitions and newer diagnostics.
 
 Roadmap
 -------
 
-**Diagnostics**
+**Next: diagnostic coverage and reliability**
 
-- [X] Potential scale reduction factor
-- [X] Split potential scale reduction factor
-- [X] Effective sample size
-- [X] Monte Carlo Standard Error
+- [ ] Add rank-normalized and folded split Rhat with reference tests from Stan or
+      the `posterior` package, while preserving the classical API.
+- [ ] Add bulk and tail ESS, then quantile-specific MCSE, with reference fixtures.
+- [ ] Replace or deprecate the public test-oriented CSV helper with a fallible
+      reader that reports I/O and parse errors and validates column counts.
+- [ ] Add a worked example showing sampler output, warmup removal, and diagnostics.
 
-**Utilities**
+**Later: API and performance**
 
-- [X] Split chains as recommended in Vehtari, et al 2019
-- [ ] Thinning
-
-**Data structures**
-
-- [ ] Introduce `Num` type to generalize our implementations to work for `f32` or `f64`.
-- [ ] Would it be helpful to have some kind of struct that can represent
-      one or more sample chains with a parameter name?
-
-**Performance**
-
-- [ ] Remove unnecessary copying or allocation
+- [ ] Benchmark FFT autocovariance against the direct kernels, and
+      choose a crossover threshold using realistic chain lengths.
+- [ ] Benchmark splitting and adapter conversion costs before further allocation changes.
+- [ ] Evaluate named multi-parameter chains against concrete caller needs before
+      committing to a container type.
+- [ ] Consider thinning as an optional storage utility, with a validated nonzero
+      stride and documentation of the statistical tradeoff.
 
 References
 ----------

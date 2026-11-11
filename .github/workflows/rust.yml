@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         toolchain: ["1.85.0", stable]
+        features: ["", "ndarray"]
     steps:
     - uses: actions/checkout@v7
     - uses: dtolnay/rust-toolchain@master
@@ -29,13 +30,13 @@ jobs:
       run: cargo fmt --check
     - name: Clippy
       if: matrix.toolchain == 'stable'
-      run: cargo clippy --all-targets -- -D warnings
+      run: cargo clippy --all-targets --features "${{ matrix.features }}" -- -D warnings
     - name: Run tests
-      run: cargo test --all-targets
+      run: cargo test --all-targets --features "${{ matrix.features }}"
     - name: Run documentation tests
-      run: cargo test --doc
+      run: cargo test --doc --features "${{ matrix.features }}"
     - name: Build documentation
       if: matrix.toolchain == 'stable'
       env:
         RUSTDOCFLAGS: -D warnings
-      run: cargo doc --no-deps
+      run: cargo doc --no-deps --features "${{ matrix.features }}"

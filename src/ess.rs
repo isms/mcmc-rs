@@ -1,16 +1,26 @@
-use crate::utils::{flatten, mean, sample_variance, split_chains};
-use crate::{Array1, Array2};
+use crate::chains::prepare_chains;
+use crate::utils::{mean, sample_variance, shortest_chain_len, split_chain_views};
+use crate::{Array1, Array2, Sample};
 use anyhow::{Error, Result, anyhow};
 use arima::acf;
+use average::Variance;
 
 /// Computes the effective sample size (ESS) for the specified
 /// parameter across all kept samples.  The value returned is the
 /// minimum of ESS and the number_total_draws * log10(number_total_draws).
-/// When the number of total draws N is odd, the (N+1)/2th draw is ignored.
 ///
 /// Chains are trimmed from the back to match the
 /// length of the shortest chain.  Note that the effective sample size
 /// can not be estimated with fewer than four draws.
+/// Accepts vectors, borrowed slices, or native arrays of `f32` or `f64`.
+/// Calculations and the returned value use `f64`.
+///
+/// ```
+/// let chains = [[1.0_f32, 3.0, 2.0, 4.0], [2.0, 4.0, 1.0, 3.0]];
+/// let ess = mcmc::ess::compute_effective_sample_size(&chains)?;
+/// assert!(ess.is_finite());
+/// # Ok::<(), anyhow::Error>(())
+/// ```
 ///
 /// See more details in Stan reference manual section
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
@@ -22,46 +32,49 @@ use arima::acf;
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///   the same parameter
-pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
-    let num_chains = chains.len();
-    let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
+pub fn compute_effective_sample_size<T: Sample, C: AsRef<[T]>>(chains: &[C]) -> Result<f64, Error> {
+    compute_effective_sample_size_impl(&prepare_chains(chains)?)
+}
 
+pub(crate) fn compute_effective_sample_size_impl<C: AsRef<[f64]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    let num_chains = chains.len();
+    let num_draws = shortest_chain_len(chains)?;
     if num_draws < 4 {
         return Err(anyhow!("Must have at least 4 samples to compute ESS"));
     }
-
-    let mut curr = chains[0][0];
-    let mut prev = chains[0][0];
+    let first = chains[0].as_ref()[0];
+    let mut prev = first;
     let mut all_same = true;
     for chain in chains {
-        for &draw in &chain[..chains[0].len()] {
-            curr = draw;
-            if !curr.is_finite() {
+        for &draw in &chain.as_ref()[..num_draws] {
+            if !draw.is_finite() {
                 return Err(anyhow!("All values must be finite to compute ESS"));
             }
-            // the only way all_same can stay true the whole way through is if
-            // every single element of all the chains is the same
-            all_same &= (curr - prev).abs() < 1e-10;
-            prev = curr;
+            all_same &= (draw - prev).abs() < 1e-10;
+            prev = draw;
         }
     }
     if all_same {
-        let msg = format!("No ESS when elements are all constant (value={})", curr);
-        return Err(anyhow!(msg));
+        return Err(anyhow!(
+            "No ESS when elements are all constant (value={first})"
+        ));
     }
 
     let mut chain_acov: Array2 = Vec::new();
     let mut chain_mean: Array1 = Vec::new();
     let mut chain_var: Array1 = Vec::new();
     for chain in chains.iter() {
-        let acov = acf::acf(chain, None, true).unwrap();
+        let chain = &chain.as_ref()[..num_draws];
+        let acov = acf::acf(chain, None, true)?;
         chain_mean.push(mean(chain)?);
-        chain_var.push(acov[0] * num_draws as f64 / (num_draws as f64 - 1.0));
+        chain_var.push(acov[0] * (num_draws as f64 / (num_draws as f64 - 1.0)));
         chain_acov.push(acov);
     }
 
     let mean_var = mean(&chain_var)?;
-    let mut var_plus = mean_var * (num_draws as f64 - 1.0) / num_draws as f64;
+    let mut var_plus = mean_var * ((num_draws as f64 - 1.0) / num_draws as f64);
     if num_chains > 1 {
         var_plus += sample_variance(&chain_mean)?;
     }
@@ -132,7 +145,8 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 ///
 /// Chains are trimmed from the back to match the
 /// length of the shortest chain.  Note that the effective sample size
-/// can not be estimated with fewer than four draws.
+/// requires at least eight draws per original chain (four per split chain).
+/// Inputs follow [`compute_effective_sample_size`]; split halves borrow the samples.
 ///
 /// See more details in Stan reference manual section
 /// ["Effective Sample Size"](http://mc-stan.org/users/documentation)
@@ -144,20 +158,24 @@ pub fn compute_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///   the same parameter
-pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error> {
-    let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
-    // trim chains to the length of the shortest chain
-    let mut trimmed = Vec::new();
-    for chain in chains.iter() {
-        trimmed.push(chain[..num_draws].to_vec());
-    }
-    let split = split_chains(trimmed)?;
-    compute_effective_sample_size(&split)
+pub fn compute_split_effective_sample_size<T: Sample, C: AsRef<[T]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    compute_split_effective_sample_size_impl(&prepare_chains(chains)?)
+}
+
+pub(crate) fn compute_split_effective_sample_size_impl<C: AsRef<[f64]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    let split = split_chain_views(chains)?;
+    compute_effective_sample_size_impl(&split)
 }
 
 /// Computes the Monte Carlo Standard Error (MCSE) for the specified parameter
 /// across all samples, which is the standard deviation of the samples over the
 /// square root of effective sample size.
+/// Chains are trimmed from the back to match the shortest chain.
+/// Inputs follow [`compute_effective_sample_size`]; calculations and output use `f64`.
 ///
 /// See the Stan reference manual section
 /// ["Estimation of MCMC Standard Error"](https://mc-stan.org/docs/2_24/reference-manual/effective-sample-size-section.html#estimation-of-mcmc-standard-error)
@@ -166,10 +184,18 @@ pub fn compute_split_effective_sample_size(chains: &Array2) -> Result<f64, Error
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///   the same parameter
-pub fn compute_estimated_mcse(chains: &Array2) -> Result<f64, Error> {
-    let ess = compute_effective_sample_size(chains)?;
-    let var = sample_variance(&flatten(chains))?;
-    Ok((var / ess).sqrt())
+pub fn compute_estimated_mcse<T: Sample, C: AsRef<[T]>>(chains: &[C]) -> Result<f64, Error> {
+    compute_estimated_mcse_impl(&prepare_chains(chains)?)
+}
+
+pub(crate) fn compute_estimated_mcse_impl<C: AsRef<[f64]>>(chains: &[C]) -> Result<f64, Error> {
+    let ess = compute_effective_sample_size_impl(chains)?;
+    let num_draws = shortest_chain_len(chains)?;
+    let variance: Variance = chains
+        .iter()
+        .flat_map(|chain| chain.as_ref()[..num_draws].iter())
+        .collect();
+    Ok((variance.sample_variance() / ess).sqrt())
 }
 
 #[cfg(test)]
@@ -180,7 +206,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn test_identical_autocovariance_in_arima_library_and_stan() {
+    fn test_autocovariance_matches_stan() {
         let arr = vec![
             0.747858687681513,
             0.290118161168511,
@@ -225,10 +251,10 @@ mod tests {
             -0.0208019612,
             0.0681360996,
         ];
-        let arima_acf_cov = acf::acf(&arr, None, true).unwrap();
+        let actual_acov = acf::acf(&arr, None, true).unwrap();
 
         for i in 0..arr.len() {
-            assert_abs_diff_eq!(arima_acf_cov[i], stan_acov[i], epsilon = 1e-10);
+            assert_abs_diff_eq!(actual_acov[i], stan_acov[i], epsilon = 1e-10);
         }
     }
 

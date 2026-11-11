@@ -1,10 +1,15 @@
-use crate::utils::{mean, sample_variance, split_chains};
-use crate::{Array1, Array2};
-use anyhow::{Error, Result};
+use crate::Sample;
+use crate::chains::prepare_chains;
+use crate::utils::{mean, sample_variance, shortest_chain_len, split_chain_views};
+use anyhow::{Error, Result, anyhow};
 
 /// Computes the potential scale reduction (Rhat) for the specified
 /// parameter across all kept samples.  Chains are trimmed from the
 /// back to match the length of the shortest chain.
+/// Requires at least two chains with at least two finite draws each,
+/// and positive within-chain variance.
+/// Accepts vectors, borrowed slices, or native arrays of `f32` or `f64`.
+/// Calculations and the returned value use `f64`.
 ///
 /// See more details in Stan reference manual section
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction).
@@ -15,24 +20,41 @@ use anyhow::{Error, Result};
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///   the same parameter
-pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
-    let m = chains.len();
-    let n = chains.iter().map(|c| c.len()).min().unwrap();
-    let mut split_chain_mean: Array1 = Vec::new();
-    let mut split_chain_var: Array1 = Vec::new();
+pub fn potential_scale_reduction_factor<T: Sample, C: AsRef<[T]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    potential_scale_reduction_factor_impl(&prepare_chains(chains)?)
+}
 
-    for chain in chains.iter().take(m) {
-        let chain_mean = mean(chain)?;
-        split_chain_mean.push(chain_mean);
-        let chain_var = sample_variance(chain)?;
-        split_chain_var.push(chain_var);
+pub(crate) fn potential_scale_reduction_factor_impl<C: AsRef<[f64]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    let n = shortest_chain_len(chains)?;
+    if chains.len() < 2 || n < 2 {
+        return Err(anyhow!(
+            "Rhat requires at least two chains with two draws each"
+        ));
     }
-
+    let mut chain_means = Vec::new();
+    let mut chain_vars = Vec::new();
+    for chain in chains {
+        let chain = &chain.as_ref()[..n];
+        if chain.iter().any(|draw| !draw.is_finite()) {
+            return Err(anyhow!("All values must be finite to compute Rhat"));
+        }
+        chain_means.push(mean(chain)?);
+        chain_vars.push(sample_variance(chain)?);
+    }
     let n = n as f64;
-    let var_between = n * sample_variance(&split_chain_mean)?;
-    let var_within = mean(&split_chain_var)?;
+    let var_between = n * sample_variance(&chain_means)?;
+    let var_within = mean(&chain_vars)?;
+    if var_within <= 0.0 {
+        return Err(anyhow!("Rhat requires positive within-chain variance"));
+    }
     let result = ((var_between / var_within + n - 1.0) / n).sqrt();
-
+    if !result.is_finite() {
+        return Err(anyhow!("Rhat is not finite"));
+    }
     Ok(result)
 }
 
@@ -41,8 +63,8 @@ pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
 /// total draws N is odd, the (N+1)/2th draw is ignored.
 ///
 /// Chains are trimmed from the back to match the
-/// length of the shortest chain.  Argument size will be broadcast to
-/// same length as draws.
+/// length of the shortest chain. Each chain must contain at least four draws.
+/// Inputs follow [`potential_scale_reduction_factor`]; split halves borrow the samples.
 ///
 /// See more details in Stan reference manual section
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction)
@@ -53,21 +75,24 @@ pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
 ///   the same parameter
-pub fn split_potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
-    let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
-    // trim chains to the length of the shortest chain
-    let mut trimmed = Vec::new();
-    for chain in chains.iter() {
-        trimmed.push(chain[..num_draws].to_vec());
-    }
-    let split = split_chains(trimmed)?;
-    potential_scale_reduction_factor(&split)
+pub fn split_potential_scale_reduction_factor<T: Sample, C: AsRef<[T]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    split_potential_scale_reduction_factor_impl(&prepare_chains(chains)?)
+}
+
+pub(crate) fn split_potential_scale_reduction_factor_impl<C: AsRef<[f64]>>(
+    chains: &[C],
+) -> Result<f64, Error> {
+    let split = split_chain_views(chains)?;
+    potential_scale_reduction_factor_impl(&split)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::read_csv;
+    use crate::Array1;
+    use crate::utils::{read_csv, split_chains};
     use approx::assert_abs_diff_eq;
     use std::path::PathBuf;
 
