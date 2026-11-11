@@ -7,6 +7,7 @@
 
 mod autocov;
 mod chains;
+mod numerics;
 pub use chains::Sample;
 
 /// Adapters for two-dimensional ndarray views with chains on axis 0 and draws on axis 1.
