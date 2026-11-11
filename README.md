@@ -85,6 +85,27 @@ positive within-chain variance. See the
 [Stan reference manual](https://mc-stan.org/docs/reference-manual/analysis.html)
 for the definitions and newer diagnostics.
 
+SIMD and benchmarks
+-------------------
+
+Enable `simd` to use the stable-Rust `wide` crate for four-lane `f64`
+autocovariance dot products. It uses the compilation target's SIMD support with
+portable fallbacks; the default build uses the scalar kernel. Both paths retain
+`f64` arithmetic and are checked against the Stan fixtures and `arima` reference
+covariances, including unaligned inputs and incomplete vector lanes. Floating
+point summation order differs, so results need not be bit-for-bit identical.
+
+```sh
+cargo bench --bench diagnostics
+cargo bench --bench diagnostics --features simd
+```
+
+The benchmark uses four synthetic chains at 256, 1,024, and 4,096 draws each,
+reporting median time per call over seven 100 ms batches. Autocovariance still
+does quadratic work; an FFT implementation is a separate future improvement
+for long chains. SIMD accelerates the dot products, not array conversion or
+the sequential variance estimator.
+
 Roadmap
 -------
 
@@ -99,7 +120,7 @@ Roadmap
 
 **Later: API and performance**
 
-- [ ] Benchmark FFT autocovariance against the direct kernels, and
+- [ ] Benchmark FFT autocovariance against the direct scalar/SIMD kernels, and
       choose a crossover threshold using realistic chain lengths.
 - [ ] Benchmark splitting and adapter conversion costs before further allocation changes.
 - [ ] Evaluate named multi-parameter chains against concrete caller needs before

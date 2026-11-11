@@ -18,12 +18,19 @@ documentation = "https://docs.rs/mcmc"
 [features]
 default = []
 ndarray = ["dep:ndarray"]
+simd = ["dep:wide"]
 
 [dependencies]
-arima = "0.3"
 anyhow = "1"
 average = "0.17"
 ndarray = { version = "0.17", optional = true }
+# This release supports our Rust 1.85 minimum.
+wide = { version = "0.7.33", optional = true }
 
 [dev-dependencies]
 approx = "0.5"
+arima = "0.3"
+
+[[bench]]
+name = "diagnostics"
+harness = false

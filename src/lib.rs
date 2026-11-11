@@ -5,6 +5,7 @@
 //! This crate is language agnostic and intended to work with the outputs of any MCMC sampler
 //! (e.g. Stan, PyMC3, Turing.jl, etc.)
 
+mod autocov;
 mod chains;
 pub use chains::Sample;
 
