@@ -1,6 +1,7 @@
-use crate::Sample;
 use crate::chains::prepare_chains;
-use crate::utils::{mean, sample_variance, shortest_chain_len, split_chain_views};
+use crate::numerics::DrawScale;
+use crate::utils::{sample_variance, shortest_chain_len, split_chain_views};
+use crate::{Array1, Sample};
 use anyhow::{Error, Result, anyhow};
 
 /// Computes the potential scale reduction (Rhat) for the specified
@@ -10,6 +11,8 @@ use anyhow::{Error, Result, anyhow};
 /// and positive within-chain variance.
 /// Accepts vectors, borrowed slices, or native arrays of `f32` or `f64`.
 /// Calculations and the returned value use `f64`.
+/// Local centering and scaled standard deviations protect small within-chain
+/// variation. Undefined or unrepresentable estimates return errors.
 ///
 /// See more details in Stan reference manual section
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction).
@@ -35,23 +38,33 @@ pub(crate) fn potential_scale_reduction_factor_impl<C: AsRef<[f64]>>(
             "Rhat requires at least two chains with two draws each"
         ));
     }
-    let mut chain_means = Vec::new();
-    let mut chain_vars = Vec::new();
+    let scale = DrawScale::new(chains, n)?;
+    let mut split_chain_mean: Array1 = Vec::new();
+    let mut within_sd = 0.0_f64;
+
     for chain in chains {
         let chain = &chain.as_ref()[..n];
-        if chain.iter().any(|draw| !draw.is_finite()) {
-            return Err(anyhow!("All values must be finite to compute Rhat"));
-        }
-        chain_means.push(mean(chain)?);
-        chain_vars.push(sample_variance(chain)?);
+        // Center each chain locally before expressing its spread in common
+        // units. Global centering could erase tiny variation in a chain far
+        // from the midpoint of the combined range.
+        let local = DrawScale::for_chain(chain);
+        let moments: average::Variance = chain.iter().map(|&draw| local.normalize(draw)).collect();
+        let relative_units = local.units / scale.units;
+        split_chain_mean.push(scale.normalize(local.center) + moments.mean() * relative_units);
+        let sd = moments.sample_variance().sqrt() * relative_units;
+        // Accumulate squared spreads without ever forming their squares.
+        within_sd = within_sd.hypot(sd);
     }
+
     let n = n as f64;
-    let var_between = n * sample_variance(&chain_means)?;
-    let var_within = mean(&chain_vars)?;
-    if var_within <= 0.0 {
+    let between_sd = sample_variance(&split_chain_mean)?.sqrt();
+    within_sd /= (chains.len() as f64).sqrt();
+    if !within_sd.is_finite() || within_sd <= 0.0 {
         return Err(anyhow!("Rhat requires positive within-chain variance"));
     }
-    let result = ((var_between / var_within + n - 1.0) / n).sqrt();
+    // This is sqrt((B/n)/W + (n-1)/n). Taking square roots before
+    // the ratio avoids overflowing B or B/W when Rhat itself is finite.
+    let result = (between_sd / within_sd).hypot(((n - 1.0) / n).sqrt());
     if !result.is_finite() {
         return Err(anyhow!("Rhat is not finite"));
     }
@@ -91,7 +104,6 @@ pub(crate) fn split_potential_scale_reduction_factor_impl<C: AsRef<[f64]>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Array1;
     use crate::utils::{read_csv, split_chains};
     use approx::assert_abs_diff_eq;
     use std::path::PathBuf;

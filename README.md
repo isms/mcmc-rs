@@ -85,6 +85,17 @@ positive within-chain variance. See the
 [Stan reference manual](https://mc-stan.org/docs/reference-manual/analysis.html)
 for the definitions and newer diagnostics.
 
+Diagnostics center and scale retained draws internally to protect against large
+offsets, overflow, and underflow. Rhat preserves each chain's local variation
+before combining spreads. ESS and Rhat are independent of the original units;
+MCSE is converted back to those units after computing the standard error.
+Constant detection uses exact equality of retained draws rather than a fixed
+absolute tolerance. Variation already rounded away in the input cannot be recovered.
+If an estimate or its required variance cannot be represented, the function
+returns an error instead of a non-finite, negative, or spuriously zero result.
+Negative estimates of the classical truncated autocorrelation time also return
+errors, even when all input draws are finite and nonconstant.
+
 SIMD and benchmarks
 -------------------
 

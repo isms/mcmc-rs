@@ -1,5 +1,6 @@
 use crate::autocov::autocovariance;
 use crate::chains::prepare_chains;
+use crate::numerics::DrawScale;
 use crate::utils::{mean, sample_variance, shortest_chain_len, split_chain_views};
 use crate::{Array1, Array2, Sample};
 use anyhow::{Error, Result, anyhow};
@@ -14,6 +15,8 @@ use average::Variance;
 /// can not be estimated with fewer than four draws.
 /// Accepts vectors, borrowed slices, or native arrays of `f32` or `f64`.
 /// Calculations and the returned value use `f64`.
+/// Draws are centered and scaled internally. Identical constants and
+/// unrepresentable variance or autocorrelation estimates return errors.
 ///
 /// ```
 /// let chains = [[1.0_f32, 3.0, 2.0, 4.0], [2.0, 4.0, 1.0, 3.0]];
@@ -39,36 +42,33 @@ pub fn compute_effective_sample_size<T: Sample, C: AsRef<[T]>>(chains: &[C]) -> 
 pub(crate) fn compute_effective_sample_size_impl<C: AsRef<[f64]>>(
     chains: &[C],
 ) -> Result<f64, Error> {
-    let num_chains = chains.len();
+    let (num_draws, scale) = ess_inputs(chains)?;
+    effective_sample_size_normalized(chains, num_draws, scale)
+}
+
+fn ess_inputs<C: AsRef<[f64]>>(chains: &[C]) -> Result<(usize, DrawScale)> {
     let num_draws = shortest_chain_len(chains)?;
     if num_draws < 4 {
         return Err(anyhow!("Must have at least 4 samples to compute ESS"));
     }
-    let first = chains[0].as_ref()[0];
-    let mut prev = first;
-    let mut all_same = true;
-    for chain in chains {
-        for &draw in &chain.as_ref()[..num_draws] {
-            if !draw.is_finite() {
-                return Err(anyhow!("All values must be finite to compute ESS"));
-            }
-            all_same &= (draw - prev).abs() < 1e-10;
-            prev = draw;
-        }
-    }
-    if all_same {
-        return Err(anyhow!(
-            "No ESS when elements are all constant (value={first})"
-        ));
-    }
+    Ok((num_draws, DrawScale::new(chains, num_draws)?))
+}
+
+fn effective_sample_size_normalized<C: AsRef<[f64]>>(
+    chains: &[C],
+    num_draws: usize,
+    scale: DrawScale,
+) -> Result<f64> {
+    let num_chains = chains.len();
 
     let mut chain_acov: Array2 = Vec::new();
     let mut chain_mean: Array1 = Vec::new();
     let mut chain_var: Array1 = Vec::new();
     for chain in chains.iter() {
         let chain = &chain.as_ref()[..num_draws];
-        let acov = autocovariance(chain.iter().copied());
-        chain_mean.push(mean(chain)?);
+        let normalized = chain.iter().map(|&draw| scale.normalize(draw));
+        let acov = autocovariance(normalized.clone());
+        chain_mean.push(normalized.collect::<average::Mean>().mean());
         chain_var.push(acov[0] * (num_draws as f64 / (num_draws as f64 - 1.0)));
         chain_acov.push(acov);
     }
@@ -77,6 +77,11 @@ pub(crate) fn compute_effective_sample_size_impl<C: AsRef<[f64]>>(
     let mut var_plus = mean_var * ((num_draws as f64 - 1.0) / num_draws as f64);
     if num_chains > 1 {
         var_plus += sample_variance(&chain_mean)?;
+    }
+    if !var_plus.is_finite() || var_plus <= 0.0 {
+        return Err(anyhow!(
+            "ESS variance cannot be represented as a positive finite value"
+        ));
     }
 
     let mut rho_hat_s: Array1 = vec![0.0; num_draws];
@@ -133,9 +138,20 @@ pub(crate) fn compute_effective_sample_size_impl<C: AsRef<[f64]>>(
     // Improved estimate reduces variance in antithetic case
     let tau_hat: f64 =
         -1.0 + 2.0 * rho_hat_s.iter().take(max_s).sum::<f64>() + rho_hat_s[max_s + 1];
+    if !tau_hat.is_finite() || tau_hat < 0.0 {
+        return Err(anyhow!(
+            "Estimated ESS autocorrelation time must be finite and nonnegative"
+        ));
+    }
     let option1: f64 = num_total_draws / tau_hat;
     let option2: f64 = num_total_draws * num_total_draws.log10();
-    Ok(option1.min(option2))
+    let result = option1.min(option2);
+    if !result.is_finite() || result <= 0.0 {
+        return Err(anyhow!(
+            "ESS cannot be represented as a positive finite value"
+        ));
+    }
+    Ok(result)
 }
 
 /// Computes the split effective sample size (ESS) for the specified
@@ -176,6 +192,7 @@ pub(crate) fn compute_split_effective_sample_size_impl<C: AsRef<[f64]>>(
 /// square root of effective sample size.
 /// Chains are trimmed from the back to match the shortest chain.
 /// Inputs follow [`compute_effective_sample_size`]; calculations and output use `f64`.
+/// Returns an error if the positive standard error overflows or underflows `f64`.
 ///
 /// See the Stan reference manual section
 /// ["Estimation of MCMC Standard Error"](https://mc-stan.org/docs/2_24/reference-manual/effective-sample-size-section.html#estimation-of-mcmc-standard-error)
@@ -189,13 +206,22 @@ pub fn compute_estimated_mcse<T: Sample, C: AsRef<[T]>>(chains: &[C]) -> Result<
 }
 
 pub(crate) fn compute_estimated_mcse_impl<C: AsRef<[f64]>>(chains: &[C]) -> Result<f64, Error> {
-    let ess = compute_effective_sample_size_impl(chains)?;
-    let num_draws = shortest_chain_len(chains)?;
+    let (num_draws, scale) = ess_inputs(chains)?;
+    let ess = effective_sample_size_normalized(chains, num_draws, scale)?;
     let variance: Variance = chains
         .iter()
         .flat_map(|chain| chain.as_ref()[..num_draws].iter())
+        .map(|&draw| scale.normalize(draw))
         .collect();
-    Ok((variance.sample_variance() / ess).sqrt())
+    // Restore units after taking square roots; the variance in original units
+    // may be unrepresentable even when the standard error fits in f64.
+    let result = (variance.sample_variance().sqrt() / ess.sqrt()) * scale.units;
+    if !result.is_finite() || result <= 0.0 {
+        return Err(anyhow!(
+            "MCSE cannot be represented as a positive finite value"
+        ));
+    }
+    Ok(result)
 }
 
 #[cfg(test)]
