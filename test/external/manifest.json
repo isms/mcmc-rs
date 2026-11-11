@@ -1,0 +1,212 @@
+{
+  "conversion_versions": {
+    "h5netcdf": "1.8.2",
+    "numpy": "2.5.4"
+  },
+  "files": {
+    "NOTICE": "3d374f43b4a66d2f81b150f9957d95b7388109385b3d46efba0e1b31ba021313",
+    "arviz_centered_eight.csv": "14e0692c9a1f59d28f63677b217f8c83f6fdb479e0cad96a886b0738435d7851",
+    "arviz_radon.csv": "06dea24139c1c01ea102d42bfe76e670935406a84bc5e470920c57efc4114425",
+    "arviz_rugby.csv": "1e494215dbd51ff99018e10ddc2428fc89c796d5a4e69b1fb31ff7b1594dca20",
+    "expected.csv": "8078c3c39df2bc96ab2f8da204b6159f56e89e87781cb0f3b3265f44cc89d935",
+    "licenses/CC-BY-4.0.txt": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+    "licenses/arviz-LICENSE.txt": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "licenses/posterior-LICENSE.txt": "3a1cc8439909fee41503574428774f602a20c7321307c7c75b93678a6a179ba3",
+    "licenses/stan-LICENSE.txt": "aa2930f0a281e429c72f79a4189a188fcf20b0f2bbd4c7d030f1d5060ea649dc",
+    "posterior_eight_schools.csv": "55b14eee8c1fe90b9ec5ce111b61ca182951c4729d1a773126d2a79b06bf5346",
+    "posterior_multi_normal.csv": "f21d40ad9bf1dc9c9b076da82874c738440edb520c0557ab6549f4236fec31cf",
+    "semantics.csv": "38ae90232d62de2730809bf8ba974eb806b56589a846c2a5b34d603922f95e3c"
+  },
+  "fixtures": [
+    {
+      "chains": 4,
+      "description": "Hierarchical eight-schools model, saved Stan draws from posterior's examples.",
+      "draws_per_chain": 100,
+      "example": "eight_schools",
+      "extraction": "Selected named variables/elements; all stored posterior draws in original chain order; no thinning or resampling. CSV aliases and zero-based element indices are listed in parameters.",
+      "id": "posterior_eight_schools",
+      "license": "BSD-3-Clause",
+      "parameters": [
+        [
+          "mu",
+          "mu"
+        ],
+        [
+          "tau",
+          "tau"
+        ],
+        [
+          "theta_1",
+          "theta[1]"
+        ]
+      ],
+      "source_package_sha256": "698a1bc2076c5abb6cd6ba99edd30e049df1d1025b63ea449bdcafad6f7708f4",
+      "type": "posterior"
+    },
+    {
+      "chains": 4,
+      "description": "Three-dimensional multivariate normal mean/covariance model, saved Stan draws from posterior's examples.",
+      "draws_per_chain": 100,
+      "example": "multi_normal",
+      "extraction": "Selected named variables/elements; all stored posterior draws in original chain order; no thinning or resampling. CSV aliases and zero-based element indices are listed in parameters.",
+      "id": "posterior_multi_normal",
+      "license": "BSD-3-Clause",
+      "parameters": [
+        [
+          "mu_1",
+          "mu[1]"
+        ],
+        [
+          "mu_2",
+          "mu[2]"
+        ],
+        [
+          "sigma_1_2",
+          "Sigma[1,2]"
+        ]
+      ],
+      "source_package_sha256": "698a1bc2076c5abb6cd6ba99edd30e049df1d1025b63ea449bdcafad6f7708f4",
+      "type": "posterior"
+    },
+    {
+      "cache_file": "centered_eight.nc",
+      "chains": 4,
+      "description": "Centered eight-schools fit documented by ArviZ as difficult for NUTS; PyMC 5.20.0 draws.",
+      "draws_per_chain": 500,
+      "extraction": "Selected named variables/elements; all stored posterior draws in original chain order; no thinning or resampling. CSV aliases and zero-based element indices are listed in parameters.",
+      "id": "arviz_centered_eight",
+      "license": "Apache-2.0",
+      "parameters": [
+        [
+          "mu",
+          "mu",
+          []
+        ],
+        [
+          "tau",
+          "tau",
+          []
+        ],
+        [
+          "theta_1",
+          "theta",
+          [
+            0
+          ]
+        ]
+      ],
+      "sampler_attributes": {
+        "arviz_version": "0.20.0",
+        "created_at": "2025-01-19T14:32:33.071271+00:00",
+        "inference_library": "pymc",
+        "inference_library_version": "5.20.0",
+        "sampling_time": "3.159093141555786",
+        "tuning_steps": "1000"
+      },
+      "sha256": "1e281b47f18f36e381ed3b1634c89d5f2c8bfb3b51f6c8637a934332b0b4d304",
+      "source_metadata": "https://github.com/arviz-devs/arviz_example_data/blob/e56f5b5d7ae6e605f763661934ced3ac55a6f490/data_local.json",
+      "type": "netcdf",
+      "url": "https://raw.githubusercontent.com/arviz-devs/arviz_example_data/e56f5b5d7ae6e605f763661934ced3ac55a6f490/data/centered_eight.nc"
+    },
+    {
+      "author": "Oriol Abril Pla",
+      "cache_file": "radon.nc",
+      "chains": 4,
+      "description": "Hierarchical Minnesota radon regression; PyMC3 3.9.2 draws.",
+      "draws_per_chain": 500,
+      "extraction": "Selected named variables/elements; all stored posterior draws in original chain order; no thinning or resampling. CSV aliases and zero-based element indices are listed in parameters.",
+      "id": "arviz_radon",
+      "license": "Apache-2.0",
+      "parameters": [
+        [
+          "g_0",
+          "g",
+          [
+            0
+          ]
+        ],
+        [
+          "b",
+          "b",
+          []
+        ],
+        [
+          "sigma_a",
+          "sigma_a",
+          []
+        ]
+      ],
+      "sampler_attributes": {
+        "arviz_version": "0.9.0",
+        "created_at": "2020-07-24T18:15:12.191355",
+        "inference_library": "pymc3",
+        "inference_library_version": "3.9.2",
+        "sampling_time": "18.096983432769775",
+        "tuning_steps": "1000"
+      },
+      "sha256": "a9b2b4adf1bf9c5728e5bdc97107e69c4fc8d8b7d213e9147233b57be8b4587b",
+      "source_metadata": "https://api.figshare.com/v2/articles/12711695/versions/1",
+      "type": "netcdf",
+      "url": "https://ndownloader.figshare.com/files/24067472"
+    },
+    {
+      "author": "Oriol Abril Pla",
+      "cache_file": "rugby.nc",
+      "chains": 4,
+      "description": "Six Nations rugby attack/defence and home advantage model; PyMC 5.10.4+7.g34d2a5d9 draws.",
+      "draws_per_chain": 500,
+      "extraction": "Selected named variables/elements; all stored posterior draws in original chain order; no thinning or resampling. CSV aliases and zero-based element indices are listed in parameters.",
+      "id": "arviz_rugby",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "parameters": [
+        [
+          "home",
+          "home",
+          []
+        ],
+        [
+          "attack_0",
+          "atts",
+          [
+            0
+          ]
+        ],
+        [
+          "sd_def",
+          "sd_def",
+          []
+        ]
+      ],
+      "sampler_attributes": {
+        "arviz_version": "0.17.0",
+        "created_at": "2024-03-06T20:46:23.841916",
+        "inference_library": "pymc",
+        "inference_library_version": "5.10.4+7.g34d2a5d9",
+        "sampling_time": "8.503105401992798",
+        "tuning_steps": "1000"
+      },
+      "sha256": "f4a5e699a8a4cc93f722eb97929dd7c4895c59a2183f05309f5082f3f81eb228",
+      "source_metadata": "https://api.figshare.com/v2/articles/25293310/versions/2",
+      "type": "netcdf",
+      "url": "https://ndownloader.figshare.com/files/44916469"
+    }
+  ],
+  "generation_inputs": {
+    "scripts/validation/environment.yml": "ade77d2fbef1743e4fb074a8ccc7ea98a9454f543a2451517e29aa295fb78a3a",
+    "scripts/validation/generate.py": "75936d9a4ab892a6b6c6def1ed034d8e1deb849b411edfc66d1bfa8308f0ce35",
+    "scripts/validation/reference.R": "269f1b26b300b61efda0ad35cec0da4b9fc777480c56791e42f0c5c1b67c835e",
+    "test/external/NOTICE": "3d374f43b4a66d2f81b150f9957d95b7388109385b3d46efba0e1b31ba021313",
+    "test/external/sources.json": "0a9686b9b9eb04c8c1beb81edcd9dc05a5fbc2be8a5697c51448c7a52db7d941"
+  },
+  "reference": {
+    "legacy_source": "https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_effective_sample_size.hpp",
+    "matrix_stats_version": "1.5.0",
+    "package_sha256": "698a1bc2076c5abb6cd6ba99edd30e049df1d1025b63ea449bdcafad6f7708f4",
+    "package_url": "https://api.github.com/repos/stan-dev/posterior/tarball/540cc15f7f3a81913f2a02a0ac04700e0d352a20",
+    "posterior_commit": "540cc15f7f3a81913f2a02a0ac04700e0d352a20",
+    "posterior_version": "1.7.1",
+    "r_version": "4.5.2"
+  },
+  "schema_version": 1
+}

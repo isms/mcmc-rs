@@ -1,0 +1,46 @@
+External MCMC validation fixtures
+
+All CSV draw files here are MODIFIED EXCERPTS of the sources identified in
+sources.json and manifest.json: three named variables/elements were selected
+per dataset and serialized to 17 significant digits. All stored posterior
+iterations and original within-chain order are retained. We did not thin,
+resample, shuffle, or combine chains. Indices in sources.json are zero-based.
+The generated CSV files carry this modification notice in their first line.
+
+posterior_eight_schools.csv and posterior_multi_normal.csv:
+  Derived from the example draws shipped with posterior 1.7.1, commit
+  540cc15f7f3a81913f2a02a0ac04700e0d352a20, R/sysdata.rda.
+  https://github.com/stan-dev/posterior/tree/540cc15f7f3a81913f2a02a0ac04700e0d352a20
+  BSD 3-Clause; see licenses/posterior-LICENSE.txt for the copyright notices
+  and terms of the posterior authors and contributors.
+
+arviz_centered_eight.csv:
+  Derived from ArviZ InferenceData examples, commit
+  e56f5b5d7ae6e605f763661934ced3ac55a6f490, data/centered_eight.nc.
+  https://github.com/arviz-devs/arviz_example_data/tree/e56f5b5d7ae6e605f763661934ced3ac55a6f490
+  ArviZ contributors. Apache License 2.0; see licenses/arviz-LICENSE.txt.
+
+arviz_radon.csv:
+  Oriol Abril Pla, "radon hierarchical model inferencedata", 2020.
+  https://doi.org/10.6084/m9.figshare.12711695.v1
+  Source file 24067472, radon_hierarchical.nc.
+  Apache License 2.0; see licenses/arviz-LICENSE.txt.
+
+arviz_rugby.csv:
+  Oriol Abril Pla, "Rugby base model", 2024.
+  https://doi.org/10.6084/m9.figshare.25293310.v2
+  Source file 44916469, rugby.nc.
+  Creative Commons Attribution 4.0 International (CC BY 4.0).
+  https://creativecommons.org/licenses/by/4.0/
+  See licenses/CC-BY-4.0.txt. The selections and CSV conversion described
+  above are changes made by this project. No endorsement is implied.
+
+scripts/validation/reference.R implements the classical ESS truncation
+algorithm described by Stan v2.24.0, independently of the Rust implementation.
+Stan copyright notices and BSD 3-Clause terms are retained in
+licenses/stan-LICENSE.txt. Autocovariances are computed by R stats::acf.
+Current comparisons use posterior::ess_basic and posterior::rhat_basic,
+explicitly setting split = FALSE and TRUE, and posterior::mcse_mean.
+
+expected.csv contains reference calculations for the five external draw sets.
+semantics.csv contains separate SYNTHETIC boundary probes, not extra datasets.

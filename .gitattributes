@@ -1,0 +1,2 @@
+# Preserve the checksum-pinned upstream license texts verbatim.
+test/external/licenses/*.txt -whitespace

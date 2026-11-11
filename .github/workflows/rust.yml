@@ -28,6 +28,9 @@ jobs:
     - name: Check formatting
       if: matrix.toolchain == 'stable'
       run: cargo fmt --check
+    - name: Verify external fixture provenance hashes
+      if: matrix.toolchain == 'stable' && matrix.features == ''
+      run: python3 scripts/validation/generate.py --check
     - name: Clippy
       if: matrix.toolchain == 'stable'
       run: cargo clippy --all-targets --features "${{ matrix.features }}" -- -D warnings

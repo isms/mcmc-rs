@@ -1,0 +1,3 @@
+probe,stan_2_24_ess,crate_outcome,posterior_ess
+negative_tau,-52.500000000000185,error,4.6689075023018622
+positive_tail_cutoff,1.6392337929743559,value,2.0449910484938116
