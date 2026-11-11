@@ -9,16 +9,33 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: read
+
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        toolchain: ["1.85.0", stable]
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
+    - uses: actions/checkout@v7
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        components: rustfmt, clippy
     - name: Check formatting
-      run: cargo fmt -- --check
+      if: matrix.toolchain == 'stable'
+      run: cargo fmt --check
+    - name: Clippy
+      if: matrix.toolchain == 'stable'
+      run: cargo clippy --all-targets -- -D warnings
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --all-targets
+    - name: Run documentation tests
+      run: cargo test --doc
+    - name: Build documentation
+      if: matrix.toolchain == 'stable'
+      env:
+        RUSTDOCFLAGS: -D warnings
+      run: cargo doc --no-deps

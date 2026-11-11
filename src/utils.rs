@@ -1,5 +1,5 @@
 use crate::{Array1, Array2};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use average::Mean;
 use average::Variance;
 use std::{
@@ -9,7 +9,7 @@ use std::{
 };
 
 /// Compute the arithmetic mean of an array.
-pub(in crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
+pub(crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
     if arr.is_empty() {
         return Err(anyhow!("Can't take mean of empty array"));
     }
@@ -18,7 +18,7 @@ pub(in crate) fn mean(arr: &[f64]) -> Result<f64, Error> {
 }
 
 /// Compute the sample variance of an array using Bessel's correction.
-pub(in crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
+pub(crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
     if arr.is_empty() {
         return Err(anyhow!("Can't take variance of empty array"));
     }
@@ -27,7 +27,7 @@ pub(in crate) fn sample_variance(arr: &[f64]) -> Result<f64, Error> {
 }
 
 /// Clone a 2D array into one long 1D array.
-pub(in crate) fn flatten(chains: &Array2) -> Array1 {
+pub(crate) fn flatten(chains: &Array2) -> Array1 {
     let mut flattened = Vec::new();
     for chain in chains {
         flattened.extend(chain);
@@ -69,22 +69,20 @@ pub fn split_chains(chains: Array2) -> Result<Array2, Error> {
 ///
 /// # Arguments
 /// * `skip_rows` - Number of rows to skip before numeric values. For example,
-///                 if there is a header row you can pass in the value `1`.
+///   if there is a header row you can pass in the value `1`.
 /// * `n_rows` - Number of rows to read in. Use if you only want a certain
-///              subset of rows or if there are improper rows after the numeric
-///              rows (e.g. in Stan sample files there are commented rows at the end).
+///   subset of rows or if there are improper rows after the numeric
+///   rows (e.g. in Stan sample files there are commented rows at the end).
 pub fn read_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
     let mut result: Array2 = Vec::new();
-    let f = File::open(&path).unwrap();
+    let f = File::open(path).unwrap();
     let f = BufReader::new(f);
-    for line in f.lines().skip(skip_rows).take(n_rows) {
-        if let Ok(line) = line {
-            for (idx, value) in line.split(',').enumerate() {
-                if idx >= result.len() {
-                    result.push(Vec::new())
-                }
-                result[idx].push(value.parse::<f64>().unwrap());
+    for line in f.lines().skip(skip_rows).take(n_rows).flatten() {
+        for (idx, value) in line.split(',').enumerate() {
+            if idx >= result.len() {
+                result.push(Vec::new())
             }
+            result[idx].push(value.parse::<f64>().unwrap());
         }
     }
     result
@@ -94,6 +92,7 @@ pub fn read_csv(path: &PathBuf, skip_rows: usize, n_rows: usize) -> Array2 {
 mod tests {
     use super::*;
     use crate::Array1;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn test_stats() {

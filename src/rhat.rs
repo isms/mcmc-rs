@@ -10,11 +10,11 @@ use anyhow::{Error, Result};
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction).
 ///
 /// Based on reference implementation in Stan v2.24.0 at
-/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp
+/// <https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp>
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
-///              the same parameter
+///   the same parameter
 pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let m = chains.len();
     let n = chains.iter().map(|c| c.len()).min().unwrap();
@@ -48,11 +48,11 @@ pub fn potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
 /// ["Potential Scale Reduction"](https://mc-stan.org/docs/2_24/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction)
 ///
 /// Based on reference implementation in Stan v2.24.0 at
-/// https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp
+/// <https://github.com/stan-dev/stan/blob/v2.24.0/src/stan/analyze/mcmc/compute_potential_scale_reduction.hpp>
 ///
 /// # Arguments
 /// * `chains` - Reference to a vector of chains, each of which is a vector of samples for
-///              the same parameter
+///   the same parameter
 pub fn split_potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Error> {
     let num_draws = chains.iter().map(|c| c.len()).min().unwrap();
     // trim chains to the length of the shortest chain
@@ -68,6 +68,7 @@ pub fn split_potential_scale_reduction_factor(chains: &Array2) -> Result<f64, Er
 mod tests {
     use super::*;
     use crate::utils::read_csv;
+    use approx::assert_abs_diff_eq;
     use std::path::PathBuf;
 
     #[test]
@@ -107,7 +108,7 @@ mod tests {
 
     #[test]
     fn test_stan_blocker_unit_test_potential_scale_reduction_factor() {
-        // Based on the unit test in Stan 2.2.4 but using slightly more precision:
+        // Based on the unit test in Stan 2.24.0 but using slightly more precision:
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_potential_scale_reduction_test.cpp#L63-L99
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
@@ -130,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_stan_blocker_unit_test_split_potential_scale_reduction_factor() {
-        // Based on the unit test in Stan 2.2.4 but using slightly more precision:
+        // Based on the unit test in Stan 2.24.0 but using slightly more precision:
         // https://github.com/stan-dev/stan/blob/v2.24.0/src/test/unit/analyze/mcmc/compute_potential_scale_reduction_test.cpp#L135-L175
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let samples1 = read_csv(&d.join("test/stan/blocker.1.csv"), 41, 1000);
